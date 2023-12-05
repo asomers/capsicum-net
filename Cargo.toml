@@ -1,0 +1,30 @@
+[package]
+name = "capsicum_net"
+description = "Rust bindings to FreeBSD's cap_net library"
+version = "0.1.0"
+edition = "2021"
+authors = ["Alan Somers <asomers@gmail.com>"]
+license = "MIT/Apache-2.0"
+keywords = ["capsicum", "freebsd", "network"]
+
+[features]
+default = []
+
+[dependencies]
+capsicum = { version = "0.3.0", features = ["casper"] }
+casper-sys = { version = "0.1.1" }
+cstr = "0.2.11"
+libc = "0.2.150"
+nix = { version = "0.27.0", features = [ "net", "socket" ] }
+tokio = { version = "1.34.0", default-features = false, features = ["net"], optional = true}
+
+[build-dependencies]
+bindgen = { version = "0.66.0", features=[] }
+
+[dev-dependencies]
+ctor = "0.2.3"
+tokio = { version = "1.34.0", features = ["macros", "rt"] }
+
+[patch.crates-io]
+capsicum = { git = "https://github.com/asomers/capsicum-rs", rev = "4d4f209"}
+casper-sys = { git = "https://github.com/asomers/capsicum-rs", rev = "4d4f209"}
