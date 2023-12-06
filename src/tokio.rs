@@ -19,7 +19,7 @@ pub trait TcpSocketExt {
     /// #[tokio::main(flavor = "current_thread")]
     /// async fn main() -> io::Result<()> {
     ///     // Safe because we are single-threaded
-    ///     let casper = unsafe { Casper::new().unwrap() };
+    ///     let mut casper = unsafe { Casper::new().unwrap() };
     ///     let mut cap_net = casper.net().unwrap();
     ///
     ///     let addr = "127.0.0.1:8080".parse().unwrap();

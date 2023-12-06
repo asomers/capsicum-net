@@ -19,19 +19,19 @@ use capsicum_net::{CasperExt};
 
 // CASPER must be static because it cannot be created after the program becomes
 // multithreaded.
-static CASPER: OnceLock<Casper> = OnceLock::new();
+static CASPER: OnceLock<Mutex<Casper>> = OnceLock::new();
 
 
 #[test]
 fn t2() {
-    let casper = CASPER.get().unwrap();
+    let mut casper = CASPER.get().unwrap().lock().unwrap();
     let mut cap_net1 = casper.net().unwrap();
     let mut cap_net2 = casper.net().unwrap();
 }
 
 #[test]
 fn nix() {
-    let casper = CASPER.get().unwrap();
+    let mut casper = CASPER.get().unwrap().lock().unwrap();
     let mut cap_net = casper.net().unwrap();
 
     let s = socket(AddressFamily::Inet, SockType::Stream, SockFlag::empty(), None)
@@ -45,7 +45,7 @@ fn nix() {
 #[tokio::test]
 async fn tokio() {
     use capsicum_net::tokio::TcpSocketExt;
-    let casper = CASPER.get().unwrap();
+    let mut casper = CASPER.get().unwrap().lock().unwrap();
     let mut cap_net = casper.net().unwrap();
 
     let want = "127.0.0.1:8083".parse().unwrap();
@@ -61,6 +61,6 @@ async fn tokio() {
 #[ctor]
 unsafe fn casper_initialize() {
     // safe because we are single-threaded during #[ctor]
-    let casper = unsafe { Casper::new().unwrap() };
+    let casper = Mutex::new(unsafe { Casper::new().unwrap() });
     CASPER.set(casper).unwrap();
 }

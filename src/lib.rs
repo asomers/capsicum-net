@@ -66,7 +66,7 @@ impl CapNetAgent {
     /// };
     ///
     /// // Safe if we are single-threaded
-    /// let casper = unsafe { Casper::new().unwrap() };
+    /// let mut casper = unsafe { Casper::new().unwrap() };
     /// let mut cap_net = casper.net().unwrap();
     /// let s = socket(AddressFamily::Inet, SockType::Stream, SockFlag::empty(),
     ///     None).unwrap();
