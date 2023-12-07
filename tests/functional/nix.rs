@@ -11,9 +11,11 @@ use nix::{
         SockType,
         SockaddrIn,
         SockaddrIn6,
+        UnixAddr,
     },
     Error,
 };
+use tempfile::TempDir;
 
 use crate::CASPER;
 
@@ -70,6 +72,26 @@ mod bind {
         let want = SockaddrIn6::from_str("[::1]:8089").unwrap();
         cap_net.bind(s.as_raw_fd(), &want).unwrap();
         let bound: SockaddrIn6 = getsockname(s.as_raw_fd()).unwrap();
+        assert_eq!(want, bound);
+    }
+
+    #[test]
+    fn unix() {
+        let mut casper = CASPER.get().unwrap().lock().unwrap();
+        let mut cap_net = casper.net().unwrap();
+
+        let s = socket(
+            AddressFamily::Unix,
+            SockType::Stream,
+            SockFlag::empty(),
+            None,
+        )
+        .unwrap();
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("sock");
+        let want = UnixAddr::new(&path).unwrap();
+        cap_net.bind(s.as_raw_fd(), &want).unwrap();
+        let bound: UnixAddr = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
     }
 }
