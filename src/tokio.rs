@@ -1,4 +1,5 @@
 // vim: tw=80
+#![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 use std::{io, os::fd::AsRawFd};
 
 use nix::sys::socket::{SockaddrIn, SockaddrIn6, SockaddrLike};

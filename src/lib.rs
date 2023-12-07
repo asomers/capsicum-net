@@ -17,6 +17,7 @@
 //! [`UdpSocketExt`].
 //! * Extension traits that work with tokio types, like
 //! [`TcpSocketExt`](tokio::TcpSocketExt).
+#![cfg_attr(docsrs, feature(doc_cfg))]
 use std::{
     io,
     net::{ToSocketAddrs, UdpSocket},
