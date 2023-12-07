@@ -24,7 +24,7 @@ use cstr::cstr;
 use nix::{
     Result,
     errno::Errno,
-    sys::socket::{SockaddrIn, SockaddrIn6, SockaddrLike}
+    sys::socket::{SockaddrIn6, SockaddrLike}
 };
 
 #[allow(non_camel_case_types)]
@@ -91,11 +91,8 @@ impl UdpSocketExt for UdpSocket {
         where A: ToSocketAddrs
     {
         use nix::{
-            Result,
-            errno::Errno,
             sys::socket::{
-                AddressFamily, SockaddrIn, SockaddrLike, SockFlag,
-                SockType, getsockname, socket
+                AddressFamily, SockaddrIn, SockFlag, SockType
             }
         };
 

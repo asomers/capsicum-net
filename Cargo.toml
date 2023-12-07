@@ -25,6 +25,10 @@ bindgen = { version = "0.66.0", features=[] }
 ctor = "0.2.3"
 tokio = { version = "1.34.0", features = ["macros", "rt"] }
 
+[[test]] 
+name = "functional"
+path = "tests/functional/mod.rs"
+
 [patch.crates-io]
 capsicum = { git = "https://github.com/asomers/capsicum-rs", rev = "24330ee"}
 casper-sys = { git = "https://github.com/asomers/capsicum-rs", rev = "24330ee"}
