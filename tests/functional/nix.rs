@@ -10,6 +10,7 @@ use nix::{
         SockFlag,
         SockType,
         SockaddrIn,
+        SockaddrIn6,
     },
     Error,
 };
@@ -37,7 +38,7 @@ mod bind {
     }
 
     #[test]
-    fn ok() {
+    fn ipv4() {
         let mut casper = CASPER.get().unwrap().lock().unwrap();
         let mut cap_net = casper.net().unwrap();
 
@@ -51,6 +52,24 @@ mod bind {
         let want = SockaddrIn::from_str("127.0.0.1:8082").unwrap();
         cap_net.bind(s.as_raw_fd(), &want).unwrap();
         let bound: SockaddrIn = getsockname(s.as_raw_fd()).unwrap();
+        assert_eq!(want, bound);
+    }
+
+    #[test]
+    fn ipv6() {
+        let mut casper = CASPER.get().unwrap().lock().unwrap();
+        let mut cap_net = casper.net().unwrap();
+
+        let s = socket(
+            AddressFamily::Inet6,
+            SockType::Stream,
+            SockFlag::empty(),
+            None,
+        )
+        .unwrap();
+        let want = SockaddrIn6::from_str("[::1]:8089").unwrap();
+        cap_net.bind(s.as_raw_fd(), &want).unwrap();
+        let bound: SockaddrIn6 = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
     }
 }
