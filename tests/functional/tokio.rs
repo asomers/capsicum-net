@@ -1,7 +1,5 @@
-use capsicum_net::{
-    CasperExt,
-    tokio::TcpSocketExt
-};
+// vim: tw=80
+use capsicum_net::{tokio::TcpSocketExt, CasperExt};
 
 use crate::CASPER;
 

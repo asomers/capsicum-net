@@ -1,9 +1,8 @@
+// vim: tw=80
 use ::std::sync::{Mutex, OnceLock};
-
 use capsicum::casper::Casper;
+use capsicum_net::CasperExt;
 use ctor::ctor;
-
-use capsicum_net::{CasperExt};
 
 mod nix;
 mod std;
@@ -13,7 +12,6 @@ mod tokio;
 // CASPER must be static because it cannot be created after the program becomes
 // multithreaded.
 static CASPER: OnceLock<Mutex<Casper>> = OnceLock::new();
-
 
 /// Not that you'd ever want to, but it should be possible to create multiple
 /// instances of the service.

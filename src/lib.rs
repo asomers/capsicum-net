@@ -1,3 +1,4 @@
+// vim: tw=80
 //! Rust bindings to FreeBSD's
 //! [cap_net(3)](https://man.freebsd.org/cgi/man.cgi?query=cap_net) library.
 //!
@@ -19,15 +20,15 @@
 use std::{
     io,
     net::{ToSocketAddrs, UdpSocket},
-    os::fd::{AsRawFd, RawFd}
+    os::fd::{AsRawFd, RawFd},
 };
 
 use capsicum::casper;
 use cstr::cstr;
 use nix::{
-    Result,
     errno::Errno,
-    sys::socket::{SockaddrIn6, SockaddrLike}
+    sys::socket::{SockaddrIn6, SockaddrLike},
+    Result,
 };
 
 #[allow(non_camel_case_types)]
@@ -41,7 +42,7 @@ mod ffi {
 #[cfg(feature = "tokio")]
 pub mod tokio;
 
-casper::service_connection!{
+casper::service_connection! {
     pub CapNetAgent,
     cstr!("system.net"),
     net
@@ -74,10 +75,9 @@ impl CapNetAgent {
     /// let s = socket(AddressFamily::Inet, SockType::Stream, SockFlag::empty(),
     ///     None).unwrap();
     /// let addr = SockaddrIn::from_str("127.0.0.1:8081").unwrap();
-    /// cap_net.bind(s.as_raw_fd(), &addr).unwrap(); 
+    /// cap_net.bind(s.as_raw_fd(), &addr).unwrap();
     /// ```
-    pub fn bind(&mut self, sock: RawFd, addr: &dyn SockaddrLike) -> Result<()>
-    {
+    pub fn bind(&mut self, sock: RawFd, addr: &dyn SockaddrLike) -> Result<()> {
         let res = unsafe {
             ffi::cap_bind(self.0.as_mut_ptr(), sock, addr.as_ptr(), addr.len())
         };
@@ -88,7 +88,8 @@ impl CapNetAgent {
 /// Adds extra features to `std::net::UdpSocket` that require Casper.
 pub trait UdpSocketExt {
     fn cap_bind<A>(agent: &mut CapNetAgent, addr: A) -> io::Result<UdpSocket>
-        where A: ToSocketAddrs;
+    where
+        A: ToSocketAddrs;
 }
 
 impl UdpSocketExt for UdpSocket {
@@ -109,13 +110,10 @@ impl UdpSocketExt for UdpSocket {
     ///     .unwrap();
     /// ```
     fn cap_bind<A>(agent: &mut CapNetAgent, addrs: A) -> io::Result<UdpSocket>
-        where A: ToSocketAddrs
+    where
+        A: ToSocketAddrs,
     {
-        use nix::{
-            sys::socket::{
-                AddressFamily, SockaddrIn, SockFlag, SockType
-            }
-        };
+        use nix::sys::socket::{AddressFamily, SockFlag, SockType, SockaddrIn};
 
         let ap = agent.0.as_mut_ptr();
         let mut last_err = None;
@@ -126,34 +124,55 @@ impl UdpSocketExt for UdpSocket {
                 // we must convert it.  Nix's representation _is_ guaranteed.
                 // Ditto for SocketAddtV6.
                 std::net::SocketAddr::V4(addr) => {
-                    let sock = nix::sys::socket::socket(AddressFamily::Inet, SockType::Datagram, SockFlag::empty(),
-                        None).unwrap(); // TODO: convert error type and return it
+                    let sock = nix::sys::socket::socket(
+                        AddressFamily::Inet,
+                        SockType::Datagram,
+                        SockFlag::empty(),
+                        None,
+                    )
+                    .unwrap(); // TODO: convert error type and return it
                     let sin = SockaddrIn::from(addr);
                     let res = unsafe {
-                        ffi::cap_bind(ap, sock.as_raw_fd(), sin.as_ptr(), sin.len())
+                        ffi::cap_bind(
+                            ap,
+                            sock.as_raw_fd(),
+                            sin.as_ptr(),
+                            sin.len(),
+                        )
                     };
                     (sock, res)
                 }
                 std::net::SocketAddr::V6(addr) => {
-                    let sock = nix::sys::socket::socket(AddressFamily::Inet6, SockType::Datagram, SockFlag::empty(),
-                        None).unwrap(); // TODO: convert error type and return it
+                    let sock = nix::sys::socket::socket(
+                        AddressFamily::Inet6,
+                        SockType::Datagram,
+                        SockFlag::empty(),
+                        None,
+                    )
+                    .unwrap(); // TODO: convert error type and return it
                     let sin6 = SockaddrIn6::from(addr);
                     let res = unsafe {
-                        ffi::cap_bind(ap, sock.as_raw_fd(), sin6.as_ptr(), sin6.len())
+                        ffi::cap_bind(
+                            ap,
+                            sock.as_raw_fd(),
+                            sin6.as_ptr(),
+                            sin6.len(),
+                        )
                     };
                     (sock, res)
                 }
             };
             if res == 0 {
-                return Ok(std::net::UdpSocket::from(sock))
+                return Ok(std::net::UdpSocket::from(sock));
             } else {
                 last_err = Some(std::io::Error::last_os_error());
             }
         }
         Err(last_err.unwrap_or_else(|| {
-            io::Error::new(io::ErrorKind::InvalidInput,
-                           "could not resolve to any addresses")
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "could not resolve to any addresses",
+            )
         }))
     }
-
 }

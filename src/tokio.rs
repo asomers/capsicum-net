@@ -1,8 +1,9 @@
+// vim: tw=80
 use std::{io, os::fd::AsRawFd};
 
 use nix::sys::socket::{SockaddrIn, SockaddrIn6, SockaddrLike};
 
-use super::{CapNetAgent, ffi};
+use super::{ffi, CapNetAgent};
 
 /// Adds extra features to `tokio::net::TcpSocket` that require Casper.
 pub trait TcpSocketExt {
@@ -31,12 +32,19 @@ pub trait TcpSocketExt {
     ///     Ok(())
     /// }
     /// ```
-    fn cap_bind(&self, agent: &mut CapNetAgent, addr: std::net::SocketAddr) -> io::Result<()>;
+    fn cap_bind(
+        &self,
+        agent: &mut CapNetAgent,
+        addr: std::net::SocketAddr,
+    ) -> io::Result<()>;
 }
 
 impl TcpSocketExt for tokio::net::TcpSocket {
-    fn cap_bind(&self, agent: &mut CapNetAgent, addr: std::net::SocketAddr) -> io::Result<()>
-    {
+    fn cap_bind(
+        &self,
+        agent: &mut CapNetAgent,
+        addr: std::net::SocketAddr,
+    ) -> io::Result<()> {
         let ap = agent.0.as_mut_ptr();
         let sock = self.as_raw_fd();
         let res = match addr {
@@ -46,15 +54,11 @@ impl TcpSocketExt for tokio::net::TcpSocket {
             // SocketAddtV6.
             std::net::SocketAddr::V4(addr) => {
                 let sin = SockaddrIn::from(addr);
-                unsafe {
-                    ffi::cap_bind(ap, sock, sin.as_ptr(), sin.len())
-                }
+                unsafe { ffi::cap_bind(ap, sock, sin.as_ptr(), sin.len()) }
             }
             std::net::SocketAddr::V6(addr) => {
                 let sin6 = SockaddrIn6::from(addr);
-                unsafe {
-                    ffi::cap_bind(ap, sock, sin6.as_ptr(), sin6.len())
-                }
+                unsafe { ffi::cap_bind(ap, sock, sin6.as_ptr(), sin6.len()) }
             }
         };
         if res == 0 {
@@ -64,4 +68,3 @@ impl TcpSocketExt for tokio::net::TcpSocket {
         }
     }
 }
-
