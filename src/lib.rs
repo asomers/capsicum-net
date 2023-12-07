@@ -17,6 +17,31 @@
 //! [`UdpSocketExt`].
 //! * Extension traits that work with tokio types, like
 //! [`TcpSocketExt`](tokio::TcpSocketExt).
+//!
+//! # Example
+//! In this example, we create a new UdpSocket and bind it to a port.  Such a
+//! thing is normally not allowed in capability mode, but cap_bind lets us do
+//! it.
+//!
+//! ```
+//! use std::{io, str::FromStr, net::UdpSocket };
+//!
+//! use capsicum::casper::Casper;
+//! use capsicum_net::{CasperExt, UdpSocketExt};
+//!
+//! // Safe because we are single-threaded
+//! let mut casper = unsafe { Casper::new().unwrap() };
+//! let mut cap_net = casper.net().unwrap();
+//!
+//! capsicum::enter();
+//!
+//! // At this point regular bind(2) will fail because we're in capability mode.
+//! UdpSocket::bind("127.0.0.1:8086").unwrap_err();
+//!
+//! // But cap_bind will still suceed.
+//! let socket = UdpSocket::cap_bind(&mut cap_net, "127.0.0.1:8086")
+//!     .unwrap();
+//! ```
 #![cfg_attr(docsrs, feature(doc_cfg))]
 use std::{
     io,
