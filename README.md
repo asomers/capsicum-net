@@ -1,6 +1,6 @@
 # capsicum-net
 
-Rust bindings to FreeBSD's [`cap_net`(3)] library.  `cap_net` allows access to
+Rust bindings to FreeBSD's [cap_net(3)] library.  `cap_net` allows access to
 several network APIs that are forbidden in capability mode by delegating them to
 an unsandboxed process, the Casper daemon.
 
