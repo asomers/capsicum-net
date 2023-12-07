@@ -1,4 +1,4 @@
-use std::sync::{Mutex, OnceLock};
+use ::std::sync::{Mutex, OnceLock};
 
 use capsicum::casper::Casper;
 use ctor::ctor;
@@ -6,6 +6,7 @@ use ctor::ctor;
 use capsicum_net::{CasperExt};
 
 mod nix;
+mod std;
 #[cfg(feature = "tokio")]
 mod tokio;
 

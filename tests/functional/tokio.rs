@@ -1,4 +1,7 @@
-use capsicum_net::CasperExt;
+use capsicum_net::{
+    CasperExt,
+    tokio::TcpSocketExt
+};
 
 use crate::CASPER;
 
@@ -7,7 +10,6 @@ mod bind {
 
     #[tokio::test]
     async fn eafnosupport() {
-        use capsicum_net::tokio::TcpSocketExt;
         let mut casper = CASPER.get().unwrap().lock().unwrap();
         let mut cap_net = casper.net().unwrap();
 
@@ -19,7 +21,6 @@ mod bind {
 
     #[tokio::test]
     async fn ok() {
-        use capsicum_net::tokio::TcpSocketExt;
         let mut casper = CASPER.get().unwrap().lock().unwrap();
         let mut cap_net = casper.net().unwrap();
 

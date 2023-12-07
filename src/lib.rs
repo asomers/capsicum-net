@@ -8,9 +8,12 @@
 //! The main entry point for this library is [`CapNetAgent`].  The agent may be
 //! created at any time, whether in capability mode or not, as long as the
 //! Casper daemon was started prior to entering capability mode.  After creating
-//! the agent, this library has two interfaces:
+//! the agent, this library has three interfaces:
 //!
-//! * Low-level methods directly on the `CapNetAgent` object.
+//! * Low-level methods directly on the `CapNetAgent` object.  These work well
+//! with the [nix](https://docs.rs/nix/0.27.1/nix/) crate.
+//! * Extension traits that work on the standard socket types, like
+//! [`UdpSocketExt`](crate::UdpSocketExt).
 //! * Extension traits that work with tokio types, like
 //! [`TcpSocketExt`](tokio::TcpSocketExt).
 use std::{
@@ -81,13 +84,31 @@ impl CapNetAgent {
         Errno::result(res).map(drop)
     }
 }
-trait UdpSocketExt {
-    fn bind<A>(agent: &mut CapNetAgent, addr: A) -> io::Result<UdpSocket>
+
+/// Adds extra features to `std::net::UdpSocket` that require Casper.
+pub trait UdpSocketExt {
+    fn cap_bind<A>(agent: &mut CapNetAgent, addr: A) -> io::Result<UdpSocket>
         where A: ToSocketAddrs;
 }
 
 impl UdpSocketExt for UdpSocket {
-    fn bind<A>(agent: &mut CapNetAgent, addrs: A) -> io::Result<UdpSocket>
+    /// Bind a `std::net::UdpSocket` to a port.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::{io, str::FromStr, net::UdpSocket };
+    ///
+    /// use capsicum::casper::Casper;
+    /// use capsicum_net::{CasperExt, UdpSocketExt};
+    ///
+    /// // Safe because we are single-threaded
+    /// let mut casper = unsafe { Casper::new().unwrap() };
+    /// let mut cap_net = casper.net().unwrap();
+    ///
+    /// let socket = UdpSocket::cap_bind(&mut cap_net, "127.0.0.1:8086")
+    ///     .unwrap();
+    /// ```
+    fn cap_bind<A>(agent: &mut CapNetAgent, addrs: A) -> io::Result<UdpSocket>
         where A: ToSocketAddrs
     {
         use nix::{
@@ -130,8 +151,8 @@ impl UdpSocketExt for UdpSocket {
             }
         }
         Err(last_err.unwrap_or_else(|| {
-            todo!()
-            //io::const_io_error!(ErrorKind::InvalidInput, "could not resolve to any addresses")
+            io::Error::new(io::ErrorKind::InvalidInput,
+                           "could not resolve to any addresses")
         }))
     }
 
