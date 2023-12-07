@@ -132,7 +132,7 @@ impl UdpSocketExt for UdpSocket {
                         SockFlag::empty(),
                         None,
                     )
-                    .unwrap(); // TODO: convert error type and return it
+                    .map_err(std::io::Error::from)?;
                     let sin = SockaddrIn::from(addr);
                     let res = unsafe {
                         ffi::cap_bind(
@@ -151,7 +151,7 @@ impl UdpSocketExt for UdpSocket {
                         SockFlag::empty(),
                         None,
                     )
-                    .unwrap(); // TODO: convert error type and return it
+                    .map_err(std::io::Error::from)?;
                     let sin6 = SockaddrIn6::from(addr);
                     let res = unsafe {
                         ffi::cap_bind(
