@@ -7,7 +7,7 @@ an unsandboxed process, the Casper daemon.
 ![Build Status](https://api.cirrus-ci.com/github/asomers/capsicum-net.svg)](https://cirrus-ci.com/github/asomers/capsicum-net)
 [![Crates.io](https://img.shields.io/crates/v/capsicum-net.svg)](https://crates.io/crates/capsicum-net)
 
-[Documentation](https://docs.rs/crate/tokio-file)
+[Documentation](https://docs.rs/crate/capsicum-net)
 
 [cap_net(3)]: https://man.freebsd.org/cgi/man.cgi?query=cap_net
 
