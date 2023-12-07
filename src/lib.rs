@@ -14,7 +14,7 @@
 //! * Low-level methods directly on the `CapNetAgent` object.  These work well
 //! with the [nix](https://docs.rs/nix/0.27.1/nix/) crate.
 //! * Extension traits that work on the standard socket types, like
-//! [`UdpSocketExt`](crate::UdpSocketExt).
+//! [`UdpSocketExt`].
 //! * Extension traits that work with tokio types, like
 //! [`TcpSocketExt`](tokio::TcpSocketExt).
 use std::{
