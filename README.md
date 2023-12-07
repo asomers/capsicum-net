@@ -26,8 +26,8 @@ There are three APIs available:
 
 # Platforms
 
-This crate only works on FreeBSD.  At least, until somebody ports `cap_net` to a
-different operating system.
+This crate only works on FreeBSD 13 and later.  At least, until somebody ports
+`cap_net` to a different operating system.
 
 # Minimum Supported Rust Version (MSRV)
 
