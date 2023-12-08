@@ -1,5 +1,8 @@
 // vim: tw=80
-use capsicum_net::{tokio::TcpSocketExt, CasperExt};
+use capsicum_net::{
+    tokio::{TcpSocketExt, UdpSocketExt},
+    CasperExt,
+};
 
 use crate::CASPER;
 
@@ -40,6 +43,24 @@ mod bind {
             let want = "[::1]:8088".parse().unwrap();
             let socket = tokio::net::TcpSocket::new_v6().unwrap();
             socket.cap_bind(&mut cap_net, want).unwrap();
+            let bound = socket.local_addr().unwrap();
+            assert_eq!(want, bound);
+        }
+    }
+
+    mod udp {
+        use super::*;
+
+        #[tokio::test]
+        async fn ipv4() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let want: std::net::SocketAddr = "127.0.0.1:8083".parse().unwrap();
+            let socket =
+                UdpSocketExt::cap_bind(&mut cap_net, want).await.unwrap();
             let bound = socket.local_addr().unwrap();
             assert_eq!(want, bound);
         }

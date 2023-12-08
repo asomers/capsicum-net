@@ -1,8 +1,8 @@
 // vim: tw=80
 #![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
-use std::{io, os::fd::AsRawFd};
+use std::{io, net::ToSocketAddrs, os::fd::AsRawFd};
 
-use tokio::net::TcpSocket;
+use tokio::net::{TcpSocket, UdpSocket};
 
 use super::CapNetAgent;
 
@@ -48,5 +48,27 @@ impl TcpSocketExt for TcpSocket {
     ) -> io::Result<()> {
         let sock = self.as_raw_fd();
         agent.bind_raw_std(sock, addr)
+    }
+}
+
+/// Extension "trait" for `tokio::net::UdpSocket`.
+///
+/// It functions like an extension trait with only static methods, though it's
+/// technically a struct.
+pub struct UdpSocketExt {}
+
+impl UdpSocketExt {
+    // This function takes std::net::ToSocketAddrs instead of
+    // tokio::net::ToSocketAddrs because the latter has no publicly available
+    // methods.
+    pub async fn cap_bind<A: ToSocketAddrs>(
+        agent: &mut CapNetAgent,
+        addrs: A,
+    ) -> io::Result<UdpSocket> {
+        let std_sock = <std::net::UdpSocket as crate::UdpSocketExt>::cap_bind(
+            agent, addrs,
+        )?;
+        std_sock.set_nonblocking(true)?;
+        UdpSocket::from_std(std_sock)
     }
 }

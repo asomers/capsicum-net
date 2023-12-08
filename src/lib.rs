@@ -188,11 +188,12 @@ impl UdpSocketExt for UdpSocket {
                 AddressFamily::Inet6
             };
             let sock = nix::sys::socket::socket(
-                    family,
-                    SockType::Datagram,
-                    SockFlag::empty(),
-                    None,
-                ).map_err(std::io::Error::from)?;
+                family,
+                SockType::Datagram,
+                SockFlag::empty(),
+                None,
+            )
+            .map_err(std::io::Error::from)?;
             match agent.bind_raw_std(sock.as_raw_fd(), addr) {
                 Ok(()) => return Ok(std::net::UdpSocket::from(sock)),
                 Err(e) => {
