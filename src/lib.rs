@@ -53,7 +53,14 @@ use capsicum::casper;
 use cstr::cstr;
 use nix::{
     errno::Errno,
-    sys::socket::{SockaddrIn6, SockaddrLike},
+    sys::socket::{
+        AddressFamily,
+        SockFlag,
+        SockType,
+        SockaddrIn,
+        SockaddrIn6,
+        SockaddrLike,
+    },
     Result,
 };
 
@@ -111,6 +118,38 @@ impl CapNetAgent {
         };
         Errno::result(res).map(drop)
     }
+
+    /// Helper that binds a raw socket to a std sockaddr
+    fn bind_raw_std(
+        &mut self,
+        sock: RawFd,
+        addr: std::net::SocketAddr,
+    ) -> io::Result<()> {
+        let ap = self.0.as_mut_ptr();
+        let res = match addr {
+            // Even though std::net::SocketAddrV4 is probably stored identically
+            // to libc::sockaddr_in, that isn't guaranteed, so we must convert
+            // it.  Nix's representation _is_ guaranteed.  Ditto for
+            // SocketAddrV6.
+            // XXX ffi::cap_bind is technically a blocking operation.  It blocks
+            // within the C library.  But the communication is always local, and
+            // in cursory testing is < 0.2 ms, so we'll do it in an ordinary
+            // tokio thread.
+            std::net::SocketAddr::V4(addr) => {
+                let sin = SockaddrIn::from(addr);
+                unsafe { ffi::cap_bind(ap, sock, sin.as_ptr(), sin.len()) }
+            }
+            std::net::SocketAddr::V6(addr) => {
+                let sin6 = SockaddrIn6::from(addr);
+                unsafe { ffi::cap_bind(ap, sock, sin6.as_ptr(), sin6.len()) }
+            }
+        };
+        if res == 0 {
+            Ok(())
+        } else {
+            Err(std::io::Error::last_os_error())
+        }
+    }
 }
 
 /// Adds extra features to `std::net::UdpSocket` that require Casper.
@@ -141,59 +180,24 @@ impl UdpSocketExt for UdpSocket {
     where
         A: ToSocketAddrs,
     {
-        use nix::sys::socket::{AddressFamily, SockFlag, SockType, SockaddrIn};
-
-        let ap = agent.0.as_mut_ptr();
         let mut last_err = None;
         for addr in addrs.to_socket_addrs()? {
-            let (sock, res) = match addr {
-                // Even though std::net::SocketAddrV4 is probably stored
-                // identically to libc::sockaddr_in, that isn't guaranteed, so
-                // we must convert it.  Nix's representation _is_ guaranteed.
-                // Ditto for SocketAddtV6.
-                std::net::SocketAddr::V4(addr) => {
-                    let sock = nix::sys::socket::socket(
-                        AddressFamily::Inet,
-                        SockType::Datagram,
-                        SockFlag::empty(),
-                        None,
-                    )
-                    .map_err(std::io::Error::from)?;
-                    let sin = SockaddrIn::from(addr);
-                    let res = unsafe {
-                        ffi::cap_bind(
-                            ap,
-                            sock.as_raw_fd(),
-                            sin.as_ptr(),
-                            sin.len(),
-                        )
-                    };
-                    (sock, res)
-                }
-                std::net::SocketAddr::V6(addr) => {
-                    let sock = nix::sys::socket::socket(
-                        AddressFamily::Inet6,
-                        SockType::Datagram,
-                        SockFlag::empty(),
-                        None,
-                    )
-                    .map_err(std::io::Error::from)?;
-                    let sin6 = SockaddrIn6::from(addr);
-                    let res = unsafe {
-                        ffi::cap_bind(
-                            ap,
-                            sock.as_raw_fd(),
-                            sin6.as_ptr(),
-                            sin6.len(),
-                        )
-                    };
-                    (sock, res)
-                }
-            };
-            if res == 0 {
-                return Ok(std::net::UdpSocket::from(sock));
+            let family = if addr.is_ipv4() {
+                AddressFamily::Inet
             } else {
-                last_err = Some(std::io::Error::last_os_error());
+                AddressFamily::Inet6
+            };
+            let sock = nix::sys::socket::socket(
+                    family,
+                    SockType::Datagram,
+                    SockFlag::empty(),
+                    None,
+                ).map_err(std::io::Error::from)?;
+            match agent.bind_raw_std(sock.as_raw_fd(), addr) {
+                Ok(()) => return Ok(std::net::UdpSocket::from(sock)),
+                Err(e) => {
+                    last_err = Some(e);
+                }
             }
         }
         Err(last_err.unwrap_or_else(|| {

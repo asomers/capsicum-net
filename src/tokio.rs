@@ -2,9 +2,9 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 use std::{io, os::fd::AsRawFd};
 
-use nix::sys::socket::{SockaddrIn, SockaddrIn6, SockaddrLike};
+use tokio::net::TcpSocket;
 
-use super::{ffi, CapNetAgent};
+use super::CapNetAgent;
 
 /// Adds extra features to `tokio::net::TcpSocket` that require Casper.
 pub trait TcpSocketExt {
@@ -40,32 +40,13 @@ pub trait TcpSocketExt {
     ) -> io::Result<()>;
 }
 
-impl TcpSocketExt for tokio::net::TcpSocket {
+impl TcpSocketExt for TcpSocket {
     fn cap_bind(
         &self,
         agent: &mut CapNetAgent,
         addr: std::net::SocketAddr,
     ) -> io::Result<()> {
-        let ap = agent.0.as_mut_ptr();
         let sock = self.as_raw_fd();
-        let res = match addr {
-            // Even though std::net::SocketAddrV4 is probably stored identically
-            // to libc::sockaddr_in, that isn't guaranteed, so we must convert
-            // it.  Nix's representation _is_ guaranteed.  Ditto for
-            // SocketAddtV6.
-            std::net::SocketAddr::V4(addr) => {
-                let sin = SockaddrIn::from(addr);
-                unsafe { ffi::cap_bind(ap, sock, sin.as_ptr(), sin.len()) }
-            }
-            std::net::SocketAddr::V6(addr) => {
-                let sin6 = SockaddrIn6::from(addr);
-                unsafe { ffi::cap_bind(ap, sock, sin6.as_ptr(), sin6.len()) }
-            }
-        };
-        if res == 0 {
-            Ok(())
-        } else {
-            Err(std::io::Error::last_os_error())
-        }
+        agent.bind_raw_std(sock, addr)
     }
 }
