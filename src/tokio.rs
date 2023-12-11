@@ -58,6 +58,28 @@ impl TcpSocketExt for TcpSocket {
 pub struct UdpSocketExt {}
 
 impl UdpSocketExt {
+    /// Bind a `tokio::net::UdpSocket` to a port.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::{io, str::FromStr };
+    ///
+    /// use capsicum::casper::Casper;
+    /// use capsicum_net::{CasperExt, tokio::UdpSocketExt};
+    /// use tokio::net::UdpSocket;
+    ///
+    /// #[tokio::main(flavor = "current_thread")]
+    /// async fn main() -> io::Result<()> {
+    ///     // Safe because we are single-threaded
+    ///     let mut casper = unsafe { Casper::new().unwrap() };
+    ///     let mut cap_net = casper.net().unwrap();
+    ///
+    ///     let addr = "127.0.0.1:8082";
+    ///     let socket = UdpSocketExt::cap_bind(&mut cap_net, addr).await?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
     // This function takes std::net::ToSocketAddrs instead of
     // tokio::net::ToSocketAddrs because the latter has no publicly available
     // methods.

@@ -154,12 +154,6 @@ impl CapNetAgent {
 
 /// Adds extra features to `std::net::UdpSocket` that require Casper.
 pub trait UdpSocketExt {
-    fn cap_bind<A>(agent: &mut CapNetAgent, addr: A) -> io::Result<UdpSocket>
-    where
-        A: ToSocketAddrs;
-}
-
-impl UdpSocketExt for UdpSocket {
     /// Bind a `std::net::UdpSocket` to a port.
     ///
     /// # Examples
@@ -176,6 +170,12 @@ impl UdpSocketExt for UdpSocket {
     /// let socket = UdpSocket::cap_bind(&mut cap_net, "127.0.0.1:8086")
     ///     .unwrap();
     /// ```
+    fn cap_bind<A>(agent: &mut CapNetAgent, addr: A) -> io::Result<UdpSocket>
+    where
+        A: ToSocketAddrs;
+}
+
+impl UdpSocketExt for UdpSocket {
     fn cap_bind<A>(agent: &mut CapNetAgent, addrs: A) -> io::Result<UdpSocket>
     where
         A: ToSocketAddrs,
