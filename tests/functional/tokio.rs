@@ -17,7 +17,7 @@ mod bind {
             let mut casper = CASPER.get().unwrap().lock().unwrap();
             let mut cap_net = casper.net().unwrap();
 
-            let want = "127.0.0.1:8083".parse().unwrap();
+            let want = "127.0.0.1:8070".parse().unwrap();
             let socket = tokio::net::TcpSocket::new_v6().unwrap();
             let err = socket.cap_bind(&mut cap_net, want).unwrap_err();
             assert_eq!(err.raw_os_error(), Some(libc::EAFNOSUPPORT));
@@ -28,7 +28,7 @@ mod bind {
             let mut casper = CASPER.get().unwrap().lock().unwrap();
             let mut cap_net = casper.net().unwrap();
 
-            let want = "127.0.0.1:8083".parse().unwrap();
+            let want = "127.0.0.1:8071".parse().unwrap();
             let socket = tokio::net::TcpSocket::new_v4().unwrap();
             socket.cap_bind(&mut cap_net, want).unwrap();
             let bound = socket.local_addr().unwrap();
@@ -40,7 +40,7 @@ mod bind {
             let mut casper = CASPER.get().unwrap().lock().unwrap();
             let mut cap_net = casper.net().unwrap();
 
-            let want = "[::1]:8088".parse().unwrap();
+            let want = "[::1]:8072".parse().unwrap();
             let socket = tokio::net::TcpSocket::new_v6().unwrap();
             socket.cap_bind(&mut cap_net, want).unwrap();
             let bound = socket.local_addr().unwrap();
@@ -58,7 +58,21 @@ mod bind {
                 casper.net().unwrap()
             };
 
-            let want: std::net::SocketAddr = "127.0.0.1:8083".parse().unwrap();
+            let want: std::net::SocketAddr = "127.0.0.1:8073".parse().unwrap();
+            let socket =
+                UdpSocketExt::cap_bind(&mut cap_net, want).await.unwrap();
+            let bound = socket.local_addr().unwrap();
+            assert_eq!(want, bound);
+        }
+
+        #[tokio::test]
+        async fn ipv6() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let want: std::net::SocketAddr = "[::1]:8074".parse().unwrap();
             let socket =
                 UdpSocketExt::cap_bind(&mut cap_net, want).await.unwrap();
             let bound = socket.local_addr().unwrap();

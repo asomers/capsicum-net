@@ -34,7 +34,7 @@ mod bind {
             None,
         )
         .unwrap();
-        let want = SockaddrIn::from_str("127.0.0.1:8082").unwrap();
+        let want = SockaddrIn::from_str("127.0.0.1:8080").unwrap();
         let err = cap_net.bind(s.as_raw_fd(), &want).unwrap_err();
         assert_eq!(err, Error::EAFNOSUPPORT);
     }
@@ -51,7 +51,7 @@ mod bind {
             None,
         )
         .unwrap();
-        let want = SockaddrIn::from_str("127.0.0.1:8082").unwrap();
+        let want = SockaddrIn::from_str("127.0.0.1:8081").unwrap();
         cap_net.bind(s.as_raw_fd(), &want).unwrap();
         let bound: SockaddrIn = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
@@ -69,7 +69,7 @@ mod bind {
             None,
         )
         .unwrap();
-        let want = SockaddrIn6::from_str("[::1]:8089").unwrap();
+        let want = SockaddrIn6::from_str("[::1]:8082").unwrap();
         cap_net.bind(s.as_raw_fd(), &want).unwrap();
         let bound: SockaddrIn6 = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
