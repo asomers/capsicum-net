@@ -29,7 +29,7 @@ nix = { version = "0.27.0", features = [ "net", "socket" ] }
 tokio = { version = "1.25.0", default-features = false, features = ["net"], optional = true}
 
 [build-dependencies]
-bindgen = { version = "0.66.0", features=[] }
+bindgen = { version = "0.69.0", features=[] }
 
 [dev-dependencies]
 ctor = "0.2.3"

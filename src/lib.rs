@@ -45,6 +45,7 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 use std::{
     io,
+    marker::PhantomData,
     net::{ToSocketAddrs, UdpSocket},
     os::fd::{AsRawFd, RawFd},
 };
@@ -145,6 +146,73 @@ impl CapNetAgent {
                 unsafe { ffi::cap_bind(ap, sock, sin6.as_ptr(), sin6.len()) }
             }
         };
+        if res == 0 {
+            Ok(())
+        } else {
+            Err(std::io::Error::last_os_error())
+        }
+    }
+
+    /// Return an opaque handle used to further limit the capabilities of the
+    /// `cap_net` service.
+    ///
+    /// Each time a [`Limit`] is constructed and applied it can reduce, but
+    /// never enlarge, the service's capabilities.
+    ///
+    /// # Example
+    /// ```
+    /// use std::{
+    ///     os::fd::AsRawFd,
+    ///     str::FromStr
+    /// };
+    /// use capsicum::casper::Casper;
+    /// use capsicum_net::CasperExt;
+    /// use nix::sys::socket::{SockaddrIn, SockaddrLike};
+    ///
+    /// let mut casper = unsafe { Casper::new().unwrap() };
+    /// let mut cap_net = casper.net().unwrap();
+    /// let mut limit = cap_net.limit();
+    /// let addr = SockaddrIn::from_str("127.0.0.1:8083").unwrap();
+    /// limit.bind(&addr);
+    /// limit.limit();
+    /// // Now the service will refuse attempts to bind to any other address or
+    /// // port.
+    /// ```
+    pub fn limit<'a>(&'a mut self) -> Limit<'a> {
+        // NB: in the future, when capsicum-net supports more operations, the
+        // mode will be user-supplied.
+        let mode: u64 = ffi::CAPNET_BIND.into();
+        let limit = unsafe {
+            ffi::cap_net_limit_init(self.0.as_mut_ptr(), mode)
+        };
+        assert!(!limit.is_null());
+        Limit{limit, phantom: PhantomData}
+    }
+}
+
+/// Used to limit which operations will be allowed by the [`CapNetAgent`].
+#[repr(transparent)]
+pub struct Limit<'a> {
+    limit: *mut ffi::cap_net_limit_t,
+    // Because cap_net_limit_t stores a pointer to cap_channel_t
+    phantom: PhantomData<&'a mut CapNetAgent>
+}
+
+impl<'a> Limit<'a> {
+    /// Limit the `cap_net` service to only allow binding to the given address.
+    ///
+    /// May be called multiple times to allow binding to multiple addresses.
+    pub fn bind(&mut self, sa: &dyn SockaddrLike) -> &mut Self {
+        let newlimit = unsafe{
+            ffi::cap_net_limit_bind(self.limit, sa.as_ptr(), sa.len())
+        };
+        assert_eq!(newlimit, self.limit);
+        self
+    }
+
+    /// Actually apply the limits
+    pub fn limit(self) -> io::Result<()> {
+        let res = unsafe { ffi::cap_net_limit(self.limit) };
         if res == 0 {
             Ok(())
         } else {

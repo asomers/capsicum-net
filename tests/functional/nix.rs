@@ -95,3 +95,50 @@ mod bind {
         assert_eq!(want, bound);
     }
 }
+
+mod limit_bind {
+    use super::*;
+
+    #[test]
+    fn ipv4_negative() {
+        let mut casper = CASPER.get().unwrap().lock().unwrap();
+        let mut cap_net = casper.net().unwrap();
+        let limit_to = SockaddrIn::from_str("127.0.0.1:8085").unwrap();
+        let want = SockaddrIn::from_str("127.0.0.1:8084").unwrap();
+        let mut limit = cap_net.limit();
+        limit.bind(&limit_to);
+        limit.limit().unwrap();
+
+        let s = socket(
+            AddressFamily::Inet,
+            SockType::Stream,
+            SockFlag::empty(),
+            None,
+        )
+        .unwrap();
+        let e = cap_net.bind(s.as_raw_fd(), &want).unwrap_err();
+        assert_eq!(Error::ENOTCAPABLE, e);
+    }
+
+    #[test]
+    fn ipv4_postive() {
+        let mut casper = CASPER.get().unwrap().lock().unwrap();
+        let mut cap_net = casper.net().unwrap();
+        let want = SockaddrIn::from_str("127.0.0.1:8083").unwrap();
+        let mut limit = cap_net.limit();
+        limit.bind(&want);
+        limit.limit().unwrap();
+
+        let s = socket(
+            AddressFamily::Inet,
+            SockType::Stream,
+            SockFlag::empty(),
+            None,
+        )
+        .unwrap();
+        cap_net.bind(s.as_raw_fd(), &want).unwrap();
+        let bound: SockaddrIn = getsockname(s.as_raw_fd()).unwrap();
+        assert_eq!(want, bound);
+    }
+
+}
