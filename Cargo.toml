@@ -1,5 +1,5 @@
 [package]
-name = "capsicum_net"
+name = "capsicum-net"
 description = "Rust bindings to FreeBSD's cap_net library"
 version = "0.1.0"
 edition = "2021"
