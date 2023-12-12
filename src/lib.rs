@@ -78,6 +78,7 @@ pub mod tokio;
 casper::service_connection! {
     /// A connection to the Casper
     /// [cap_net(3)](https://man.freebsd.org/cgi/man.cgi?query=cap_net) service.
+    #[derive(Debug)]
     pub CapNetAgent,
     cstr!("system.net"),
     net
