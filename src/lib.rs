@@ -43,6 +43,7 @@
 //!     .unwrap();
 //! ```
 #![cfg_attr(docsrs, feature(doc_cfg))]
+#![warn(missing_docs)]
 use std::{
     io,
     marker::PhantomData,
@@ -97,13 +98,9 @@ impl CapNetAgent {
     /// };
     /// use capsicum::casper::Casper;
     /// use capsicum_net::CasperExt;
-    /// use nix::{
-    ///     Result,
-    ///     errno::Errno,
-    ///     sys::socket::{
-    ///         AddressFamily, SockaddrIn, SockaddrLike, SockFlag,
-    ///         SockType, getsockname, socket
-    ///     }
+    /// use nix::sys::socket::{
+    ///     AddressFamily, SockaddrIn, SockaddrLike, SockFlag,
+    ///     SockType, socket
     /// };
     ///
     /// // Safe if we are single-threaded

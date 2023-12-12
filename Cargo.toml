@@ -42,5 +42,5 @@ name = "functional"
 path = "tests/functional/mod.rs"
 
 [patch.crates-io]
-capsicum = { git = "https://github.com/asomers/capsicum-rs", rev = "24330ee"}
-casper-sys = { git = "https://github.com/asomers/capsicum-rs", rev = "24330ee"}
+capsicum = { git = "https://github.com/asomers/capsicum-rs", rev = "f5fd1e6"}
+casper-sys = { git = "https://github.com/asomers/capsicum-rs", rev = "f5fd1e6"}

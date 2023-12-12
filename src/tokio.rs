@@ -1,4 +1,6 @@
 // vim: tw=80
+//! Extension traits for use with Tokio's socket types
+
 #![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 use std::{io, net::ToSocketAddrs, os::fd::AsRawFd};
 
