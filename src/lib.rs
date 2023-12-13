@@ -48,7 +48,7 @@ use std::{
     io,
     marker::PhantomData,
     net::{TcpListener, ToSocketAddrs, UdpSocket},
-    os::fd::{AsFd, AsRawFd},
+    os::fd::{AsFd, AsRawFd, OwnedFd},
 };
 
 use capsicum::casper;
@@ -148,6 +148,40 @@ impl CapNetAgent {
         }
     }
 
+    /// Private helper used by the std extension traits
+    fn bind_std_to_addrs<A, S>(&mut self, addrs: A) -> io::Result<S>
+        where A: ToSocketAddrs,
+              S: From<OwnedFd>
+    {
+        let mut last_err = None;
+        for addr in addrs.to_socket_addrs()? {
+            let family = if addr.is_ipv4() {
+                AddressFamily::Inet
+            } else {
+                AddressFamily::Inet6
+            };
+            let sock = nix::sys::socket::socket(
+                family,
+                SockType::Stream,
+                SockFlag::empty(),
+                None,
+            )
+            .map_err(std::io::Error::from)?;
+            match self.bind_std_fd(sock.as_fd(), addr) {
+                Ok(()) => return Ok(S::from(sock)),
+                Err(e) => {
+                    last_err = Some(e);
+                }
+            }
+        }
+        Err(last_err.unwrap_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "could not resolve to any addresses",
+            )
+        }))
+    }
+
     /// Return an opaque handle used to further limit the capabilities of the
     /// `cap_net` service.
     ///
@@ -244,33 +278,7 @@ impl TcpListenerExt for TcpListener {
     fn cap_bind<A>(agent: &mut CapNetAgent, addrs: A) -> io::Result<TcpListener>
         where A: ToSocketAddrs
     {
-        let mut last_err = None;
-        for addr in addrs.to_socket_addrs()? {
-            let family = if addr.is_ipv4() {
-                AddressFamily::Inet
-            } else {
-                AddressFamily::Inet6
-            };
-            let sock = nix::sys::socket::socket(
-                family,
-                SockType::Stream,
-                SockFlag::empty(),
-                None,
-            )
-            .map_err(std::io::Error::from)?;
-            match agent.bind_std_fd(sock.as_fd(), addr) {
-                Ok(()) => return Ok(std::net::TcpListener::from(sock)),
-                Err(e) => {
-                    last_err = Some(e);
-                }
-            }
-        }
-        Err(last_err.unwrap_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "could not resolve to any addresses",
-            )
-        }))
+        agent.bind_std_to_addrs(addrs)
     }
 }
 
@@ -302,32 +310,6 @@ impl UdpSocketExt for UdpSocket {
     where
         A: ToSocketAddrs,
     {
-        let mut last_err = None;
-        for addr in addrs.to_socket_addrs()? {
-            let family = if addr.is_ipv4() {
-                AddressFamily::Inet
-            } else {
-                AddressFamily::Inet6
-            };
-            let sock = nix::sys::socket::socket(
-                family,
-                SockType::Datagram,
-                SockFlag::empty(),
-                None,
-            )
-            .map_err(std::io::Error::from)?;
-            match agent.bind_std_fd(sock.as_fd(), addr) {
-                Ok(()) => return Ok(std::net::UdpSocket::from(sock)),
-                Err(e) => {
-                    last_err = Some(e);
-                }
-            }
-        }
-        Err(last_err.unwrap_or_else(|| {
-            io::Error::new(
-                io::ErrorKind::InvalidInput,
-                "could not resolve to any addresses",
-            )
-        }))
+        agent.bind_std_to_addrs(addrs)
     }
 }
