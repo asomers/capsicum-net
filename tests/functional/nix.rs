@@ -1,5 +1,5 @@
 // vim: tw=80
-use std::{os::fd::AsRawFd, str::FromStr};
+use std::os::fd::AsRawFd;
 
 use capsicum_net::CasperExt;
 use nix::{
@@ -19,6 +19,22 @@ use tempfile::TempDir;
 
 use crate::CASPER;
 
+/// Get a process-wide unique local IPv4 address.
+fn get_local_in() -> SockaddrIn {
+    SockaddrIn::new(127, 0, 0, 1, crate::next_port())
+}
+
+/// Get a process-wide unique local IPv6 address.
+fn get_local_in6() -> SockaddrIn6 {
+    std::net::SocketAddrV6::new(
+        std::net::Ipv6Addr::LOCALHOST,
+        crate::next_port(),
+        0,
+        0,
+    )
+    .into()
+}
+
 mod bind {
     use super::*;
 
@@ -34,7 +50,7 @@ mod bind {
             None,
         )
         .unwrap();
-        let want = SockaddrIn::from_str("127.0.0.1:8080").unwrap();
+        let want = get_local_in();
         let err = cap_net.bind(&s, &want).unwrap_err();
         assert_eq!(err, Error::EAFNOSUPPORT);
     }
@@ -51,7 +67,7 @@ mod bind {
             None,
         )
         .unwrap();
-        let want = SockaddrIn::from_str("127.0.0.1:8081").unwrap();
+        let want = get_local_in();
         cap_net.bind(&s, &want).unwrap();
         let bound: SockaddrIn = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
@@ -69,7 +85,7 @@ mod bind {
             None,
         )
         .unwrap();
-        let want = SockaddrIn6::from_str("[::1]:8082").unwrap();
+        let want = get_local_in6();
         cap_net.bind(&s, &want).unwrap();
         let bound: SockaddrIn6 = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
@@ -103,8 +119,8 @@ mod limit_bind {
     fn ipv4_negative() {
         let mut casper = CASPER.get().unwrap().lock().unwrap();
         let mut cap_net = casper.net().unwrap();
-        let limit_to = SockaddrIn::from_str("127.0.0.1:8085").unwrap();
-        let want = SockaddrIn::from_str("127.0.0.1:8084").unwrap();
+        let limit_to = get_local_in();
+        let want = get_local_in();
         let mut limit = cap_net.limit();
         limit.bind(&limit_to);
         limit.limit().unwrap();
@@ -124,7 +140,7 @@ mod limit_bind {
     fn ipv4_postive() {
         let mut casper = CASPER.get().unwrap().lock().unwrap();
         let mut cap_net = casper.net().unwrap();
-        let want = SockaddrIn::from_str("127.0.0.1:8083").unwrap();
+        let want = get_local_in();
         let mut limit = cap_net.limit();
         limit.bind(&want);
         limit.limit().unwrap();

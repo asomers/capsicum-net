@@ -1,5 +1,9 @@
 // vim: tw=80
-use ::std::sync::{Mutex, OnceLock};
+use ::std::sync::{
+    atomic::{AtomicU16, Ordering},
+    Mutex,
+    OnceLock,
+};
 use capsicum::casper::Casper;
 use capsicum_net::CasperExt;
 use ctor::ctor;
@@ -30,4 +34,13 @@ unsafe fn casper_initialize() {
     // safe because we are single-threaded during #[ctor]
     let casper = Mutex::new(unsafe { Casper::new().unwrap() });
     CASPER.set(casper).unwrap();
+}
+
+// Use an atomic variable to ensure no two tests within this process try to use
+// the same port.
+// NB: this causes frequent failures with cargo-nextest.
+static PORT: AtomicU16 = AtomicU16::new(8000);
+
+fn next_port() -> u16 {
+    PORT.fetch_add(1, Ordering::Relaxed)
 }
