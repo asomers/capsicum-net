@@ -169,7 +169,7 @@ impl CapNetAgent {
     /// // Now the service will refuse attempts to bind to any other address or
     /// // port.
     /// ```
-    pub fn limit<'a>(&'a mut self) -> Limit<'a> {
+    pub fn limit(&mut self) -> Limit {
         // NB: in the future, when capsicum-net supports more operations, the
         // mode will be user-supplied.
         let mode: u64 = ffi::CAPNET_BIND.into();
