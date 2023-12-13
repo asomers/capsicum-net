@@ -20,7 +20,7 @@
 //!
 //! # Example
 //! In this example, we create a new UdpSocket and bind it to a port.  Such a
-//! thing is normally not allowed in capability mode, but cap_bind lets us do
+//! thing is normally not allowed in capability mode, but `cap_bind` lets us do
 //! it.
 //!
 //! ```
@@ -38,7 +38,7 @@
 //! // At this point regular bind(2) will fail because we're in capability mode.
 //! UdpSocket::bind("127.0.0.1:8086").unwrap_err();
 //!
-//! // But cap_bind will still suceed.
+//! // But cap_bind will still succeed.
 //! let socket = UdpSocket::cap_bind(&mut cap_net, "127.0.0.1:8086")
 //!     .unwrap();
 //! ```
@@ -48,7 +48,7 @@ use std::{
     io,
     marker::PhantomData,
     net::{ToSocketAddrs, UdpSocket},
-    os::fd::{AsRawFd, RawFd},
+    os::fd::{AsFd, AsRawFd},
 };
 
 use capsicum::casper;
@@ -103,22 +103,26 @@ impl CapNetAgent {
     /// let s = socket(AddressFamily::Inet, SockType::Stream, SockFlag::empty(),
     ///     None).unwrap();
     /// let addr = SockaddrIn::from_str("127.0.0.1:8081").unwrap();
-    /// cap_net.bind(s.as_raw_fd(), &addr).unwrap();
+    /// cap_net.bind(&s, &addr).unwrap();
     /// ```
-    pub fn bind(&mut self, sock: RawFd, addr: &dyn SockaddrLike) -> Result<()> {
+    pub fn bind<F>(&mut self, sock: &F, addr: &dyn SockaddrLike) -> Result<()>
+        where F: AsFd
+    {
+        let fd = sock.as_fd().as_raw_fd();
         let res = unsafe {
-            ffi::cap_bind(self.0.as_mut_ptr(), sock, addr.as_ptr(), addr.len())
+            ffi::cap_bind(self.0.as_mut_ptr(), fd, addr.as_ptr(), addr.len())
         };
         Errno::result(res).map(drop)
     }
 
     /// Helper that binds a raw socket to a std sockaddr
-    fn bind_raw_std(
+    fn bind_std_fd(
         &mut self,
-        sock: RawFd,
+        sock: std::os::fd::BorrowedFd,
         addr: std::net::SocketAddr,
     ) -> io::Result<()> {
         let ap = self.0.as_mut_ptr();
+        let fd = sock.as_raw_fd();
         let res = match addr {
             // Even though std::net::SocketAddrV4 is probably stored identically
             // to libc::sockaddr_in, that isn't guaranteed, so we must convert
@@ -130,11 +134,11 @@ impl CapNetAgent {
             // tokio thread.
             std::net::SocketAddr::V4(addr) => {
                 let sin = SockaddrIn::from(addr);
-                unsafe { ffi::cap_bind(ap, sock, sin.as_ptr(), sin.len()) }
+                unsafe { ffi::cap_bind(ap, fd, sin.as_ptr(), sin.len()) }
             }
             std::net::SocketAddr::V6(addr) => {
                 let sin6 = SockaddrIn6::from(addr);
-                unsafe { ffi::cap_bind(ap, sock, sin6.as_ptr(), sin6.len()) }
+                unsafe { ffi::cap_bind(ap, fd, sin6.as_ptr(), sin6.len()) }
             }
         };
         if res == 0 {
@@ -256,7 +260,7 @@ impl UdpSocketExt for UdpSocket {
                 None,
             )
             .map_err(std::io::Error::from)?;
-            match agent.bind_raw_std(sock.as_raw_fd(), addr) {
+            match agent.bind_std_fd(sock.as_fd(), addr) {
                 Ok(()) => return Ok(std::net::UdpSocket::from(sock)),
                 Err(e) => {
                     last_err = Some(e);

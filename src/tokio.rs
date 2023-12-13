@@ -2,7 +2,7 @@
 //! Extension traits for use with Tokio's socket types
 
 #![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
-use std::{io, net::ToSocketAddrs, os::fd::AsRawFd};
+use std::{io, net::ToSocketAddrs, os::fd::AsFd};
 
 use tokio::net::{TcpSocket, UdpSocket};
 
@@ -48,8 +48,8 @@ impl TcpSocketExt for TcpSocket {
         agent: &mut CapNetAgent,
         addr: std::net::SocketAddr,
     ) -> io::Result<()> {
-        let sock = self.as_raw_fd();
-        agent.bind_raw_std(sock, addr)
+        let sock = self.as_fd();
+        agent.bind_std_fd(sock, addr)
     }
 }
 

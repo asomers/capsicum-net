@@ -35,7 +35,7 @@ mod bind {
         )
         .unwrap();
         let want = SockaddrIn::from_str("127.0.0.1:8080").unwrap();
-        let err = cap_net.bind(s.as_raw_fd(), &want).unwrap_err();
+        let err = cap_net.bind(&s, &want).unwrap_err();
         assert_eq!(err, Error::EAFNOSUPPORT);
     }
 
@@ -52,7 +52,7 @@ mod bind {
         )
         .unwrap();
         let want = SockaddrIn::from_str("127.0.0.1:8081").unwrap();
-        cap_net.bind(s.as_raw_fd(), &want).unwrap();
+        cap_net.bind(&s, &want).unwrap();
         let bound: SockaddrIn = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
     }
@@ -70,7 +70,7 @@ mod bind {
         )
         .unwrap();
         let want = SockaddrIn6::from_str("[::1]:8082").unwrap();
-        cap_net.bind(s.as_raw_fd(), &want).unwrap();
+        cap_net.bind(&s, &want).unwrap();
         let bound: SockaddrIn6 = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
     }
@@ -90,7 +90,7 @@ mod bind {
         let dir = TempDir::new().unwrap();
         let path = dir.path().join("sock");
         let want = UnixAddr::new(&path).unwrap();
-        cap_net.bind(s.as_raw_fd(), &want).unwrap();
+        cap_net.bind(&s, &want).unwrap();
         let bound: UnixAddr = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
     }
@@ -116,7 +116,7 @@ mod limit_bind {
             None,
         )
         .unwrap();
-        let e = cap_net.bind(s.as_raw_fd(), &want).unwrap_err();
+        let e = cap_net.bind(&s, &want).unwrap_err();
         assert_eq!(Error::ENOTCAPABLE, e);
     }
 
@@ -136,7 +136,7 @@ mod limit_bind {
             None,
         )
         .unwrap();
-        cap_net.bind(s.as_raw_fd(), &want).unwrap();
+        cap_net.bind(&s, &want).unwrap();
         let bound: SockaddrIn = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
     }
