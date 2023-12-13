@@ -48,7 +48,11 @@ use std::{
     io,
     marker::PhantomData,
     net::{TcpListener, ToSocketAddrs, UdpSocket},
-    os::fd::{AsFd, AsRawFd, OwnedFd},
+    os::{
+        fd::{AsFd, AsRawFd, OwnedFd},
+        unix::net::UnixDatagram,
+    },
+    path::Path,
 };
 
 use capsicum::casper;
@@ -318,5 +322,50 @@ impl UdpSocketExt for UdpSocket {
         A: ToSocketAddrs,
     {
         agent.bind_std_to_addrs(addrs)
+    }
+}
+
+/// Adds extra features to `std::os::unix::net::UnixDatagram` that require
+/// Casper.
+pub trait UnixDatagramExt {
+    /// Bind a `std::net::UdpSocket` to a port.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use std::{io, str::FromStr, os::unix::net::UnixDatagram };
+    ///
+    /// use capsicum::casper::Casper;
+    /// use capsicum_net::{CasperExt, UnixDatagramExt};
+    ///
+    /// // Safe because we are single-threaded
+    /// let mut casper = unsafe { Casper::new().unwrap() };
+    /// let mut cap_net = casper.net().unwrap();
+    ///
+    /// let path = "/var/run/foo.sock";
+    /// let socket = UnixDatagram::cap_bind(&mut cap_net, &path).unwrap();
+    /// ```
+    fn cap_bind<P>(
+        agent: &mut CapNetAgent,
+        path: P,
+    ) -> io::Result<UnixDatagram>
+    where
+        P: AsRef<Path>;
+}
+
+impl UnixDatagramExt for UnixDatagram {
+    fn cap_bind<P>(agent: &mut CapNetAgent, path: P) -> io::Result<UnixDatagram>
+    where
+        P: AsRef<Path>,
+    {
+        let s = nix::sys::socket::socket(
+            AddressFamily::Unix,
+            SockType::Datagram,
+            SockFlag::empty(),
+            None,
+        )
+        .unwrap();
+        let want = nix::sys::socket::UnixAddr::new(path.as_ref()).unwrap();
+        agent.bind(&s, &want)?;
+        Ok(UnixDatagram::from(s))
     }
 }
