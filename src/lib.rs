@@ -173,20 +173,22 @@ impl CapNetAgent {
         // NB: in the future, when capsicum-net supports more operations, the
         // mode will be user-supplied.
         let mode: u64 = ffi::CAPNET_BIND.into();
-        let limit = unsafe {
-            ffi::cap_net_limit_init(self.0.as_mut_ptr(), mode)
-        };
+        let limit =
+            unsafe { ffi::cap_net_limit_init(self.0.as_mut_ptr(), mode) };
         assert!(!limit.is_null());
-        Limit{limit, phantom: PhantomData}
+        Limit {
+            limit,
+            phantom: PhantomData,
+        }
     }
 }
 
 /// Used to limit which operations will be allowed by the [`CapNetAgent`].
 #[repr(transparent)]
 pub struct Limit<'a> {
-    limit: *mut ffi::cap_net_limit_t,
+    limit:   *mut ffi::cap_net_limit_t,
     // Because cap_net_limit_t stores a pointer to cap_channel_t
-    phantom: PhantomData<&'a mut CapNetAgent>
+    phantom: PhantomData<&'a mut CapNetAgent>,
 }
 
 impl<'a> Limit<'a> {
@@ -194,7 +196,7 @@ impl<'a> Limit<'a> {
     ///
     /// May be called multiple times to allow binding to multiple addresses.
     pub fn bind(&mut self, sa: &dyn SockaddrLike) -> &mut Self {
-        let newlimit = unsafe{
+        let newlimit = unsafe {
             ffi::cap_net_limit_bind(self.limit, sa.as_ptr(), sa.len())
         };
         assert_eq!(newlimit, self.limit);

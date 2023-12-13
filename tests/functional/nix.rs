@@ -140,5 +140,4 @@ mod limit_bind {
         let bound: SockaddrIn = getsockname(s.as_raw_fd()).unwrap();
         assert_eq!(want, bound);
     }
-
 }
