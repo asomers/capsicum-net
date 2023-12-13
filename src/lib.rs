@@ -66,13 +66,7 @@ use nix::{
     Result,
 };
 
-#[allow(non_camel_case_types)]
-mod ffi {
-    use casper_sys::cap_channel_t;
-    use libc::sockaddr;
-
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-}
+mod ffi;
 
 #[cfg(feature = "tokio")]
 pub mod tokio;
