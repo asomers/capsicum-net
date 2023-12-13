@@ -106,7 +106,8 @@ impl CapNetAgent {
     /// cap_net.bind(&s, &addr).unwrap();
     /// ```
     pub fn bind<F>(&mut self, sock: &F, addr: &dyn SockaddrLike) -> Result<()>
-        where F: AsFd
+    where
+        F: AsFd,
     {
         let fd = sock.as_fd().as_raw_fd();
         let res = unsafe {
@@ -150,8 +151,9 @@ impl CapNetAgent {
 
     /// Private helper used by the std extension traits
     fn bind_std_to_addrs<A, S>(&mut self, addrs: A) -> io::Result<S>
-        where A: ToSocketAddrs,
-              S: From<OwnedFd>
+    where
+        A: ToSocketAddrs,
+        S: From<OwnedFd>,
     {
         let mut last_err = None;
         for addr in addrs.to_socket_addrs()? {
@@ -270,13 +272,18 @@ pub trait TcpListenerExt {
     /// let socket = TcpListener::cap_bind(&mut cap_net, "127.0.0.1:8084")
     ///     .unwrap();
     /// ```
-    fn cap_bind<A>(agent: &mut CapNetAgent, addrs: A) -> io::Result<TcpListener>
-        where A: ToSocketAddrs;
+    fn cap_bind<A>(
+        agent: &mut CapNetAgent,
+        addrs: A,
+    ) -> io::Result<TcpListener>
+    where
+        A: ToSocketAddrs;
 }
 
 impl TcpListenerExt for TcpListener {
     fn cap_bind<A>(agent: &mut CapNetAgent, addrs: A) -> io::Result<TcpListener>
-        where A: ToSocketAddrs
+    where
+        A: ToSocketAddrs,
     {
         agent.bind_std_to_addrs(addrs)
     }

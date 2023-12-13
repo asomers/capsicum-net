@@ -9,9 +9,9 @@ mod bind {
     use super::*;
 
     mod tcp {
-        use super::*;
-
         use std::net::TcpListener;
+
+        use super::*;
 
         #[test]
         fn eaddrinuse() {
@@ -30,7 +30,8 @@ mod bind {
             let mut cap_net = casper.net().unwrap();
 
             let addrs: Vec<SocketAddr> = Vec::new();
-            let err = TcpListener::cap_bind(&mut cap_net, &addrs[..]).unwrap_err();
+            let err =
+                TcpListener::cap_bind(&mut cap_net, &addrs[..]).unwrap_err();
             assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
         }
 
@@ -58,9 +59,9 @@ mod bind {
     }
 
     mod udp {
-        use super::*;
-
         use std::net::UdpSocket;
+
+        use super::*;
 
         #[test]
         fn eaddrinuse() {
@@ -79,7 +80,8 @@ mod bind {
             let mut cap_net = casper.net().unwrap();
 
             let addrs: Vec<SocketAddr> = Vec::new();
-            let err = UdpSocket::cap_bind(&mut cap_net, &addrs[..]).unwrap_err();
+            let err =
+                UdpSocket::cap_bind(&mut cap_net, &addrs[..]).unwrap_err();
             assert_eq!(err.kind(), io::ErrorKind::InvalidInput);
         }
 
