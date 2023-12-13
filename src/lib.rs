@@ -47,7 +47,7 @@
 use std::{
     io,
     marker::PhantomData,
-    net::{ToSocketAddrs, UdpSocket},
+    net::{TcpListener, ToSocketAddrs, UdpSocket},
     os::fd::{AsFd, AsRawFd},
 };
 
@@ -218,6 +218,62 @@ impl<'a> Limit<'a> {
     }
 }
 
+/// Adds extra features to `std::net::TcpListener` that require Casper.
+pub trait TcpListenerExt {
+    /// Create a new `TcpListener` bound to the specified address.
+    ///
+    /// # Examples
+    /// ```
+    /// use std::{io, str::FromStr, net::TcpListener };
+    ///
+    /// use capsicum::casper::Casper;
+    /// use capsicum_net::{CasperExt, TcpListenerExt};
+    ///
+    /// // Safe because we are single-threaded
+    /// let mut casper = unsafe { Casper::new().unwrap() };
+    /// let mut cap_net = casper.net().unwrap();
+    ///
+    /// let socket = TcpListener::cap_bind(&mut cap_net, "127.0.0.1:8084")
+    ///     .unwrap();
+    /// ```
+    fn cap_bind<A>(agent: &mut CapNetAgent, addrs: A) -> io::Result<TcpListener>
+        where A: ToSocketAddrs;
+}
+
+impl TcpListenerExt for TcpListener {
+    fn cap_bind<A>(agent: &mut CapNetAgent, addrs: A) -> io::Result<TcpListener>
+        where A: ToSocketAddrs
+    {
+        let mut last_err = None;
+        for addr in addrs.to_socket_addrs()? {
+            let family = if addr.is_ipv4() {
+                AddressFamily::Inet
+            } else {
+                AddressFamily::Inet6
+            };
+            let sock = nix::sys::socket::socket(
+                family,
+                SockType::Stream,
+                SockFlag::empty(),
+                None,
+            )
+            .map_err(std::io::Error::from)?;
+            match agent.bind_std_fd(sock.as_fd(), addr) {
+                Ok(()) => return Ok(std::net::TcpListener::from(sock)),
+                Err(e) => {
+                    last_err = Some(e);
+                }
+            }
+        }
+        Err(last_err.unwrap_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "could not resolve to any addresses",
+            )
+        }))
+    }
+}
+
 /// Adds extra features to `std::net::UdpSocket` that require Casper.
 pub trait UdpSocketExt {
     /// Bind a `std::net::UdpSocket` to a port.
@@ -233,7 +289,7 @@ pub trait UdpSocketExt {
     /// let mut casper = unsafe { Casper::new().unwrap() };
     /// let mut cap_net = casper.net().unwrap();
     ///
-    /// let socket = UdpSocket::cap_bind(&mut cap_net, "127.0.0.1:8086")
+    /// let socket = UdpSocket::cap_bind(&mut cap_net, "127.0.0.1:8088")
     ///     .unwrap();
     /// ```
     fn cap_bind<A>(agent: &mut CapNetAgent, addr: A) -> io::Result<UdpSocket>
