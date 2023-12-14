@@ -289,7 +289,12 @@ impl TcpListenerExt for TcpListener {
     where
         A: ToSocketAddrs,
     {
-        agent.bind_std_to_addrs(addrs)
+        let s: TcpListener = agent.bind_std_to_addrs(addrs)?;
+        // -1 means "max value", and it's what the standard library does.  It's
+        // a Nix bug that we can't use -1 here.
+        // https://github.com/nix-rust/nix/issues/2264
+        listen(&s, -1i32 as usize)?;
+        Ok(s)
     }
 }
 
