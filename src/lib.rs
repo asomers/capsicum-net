@@ -60,13 +60,13 @@ use cstr::cstr;
 use nix::{
     errno::Errno,
     sys::socket::{
+        listen,
         AddressFamily,
         SockFlag,
         SockType,
         SockaddrIn,
         SockaddrIn6,
         SockaddrLike,
-        listen
     },
     Result,
 };

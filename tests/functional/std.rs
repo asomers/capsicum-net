@@ -5,7 +5,13 @@ use std::{
     os::fd::AsRawFd,
 };
 
-use capsicum_net::{CasperExt, TcpListenerExt, UdpSocketExt, UnixDatagramExt, UnixListenerExt};
+use capsicum_net::{
+    CasperExt,
+    TcpListenerExt,
+    UdpSocketExt,
+    UnixDatagramExt,
+    UnixListenerExt,
+};
 use tempfile::TempDir;
 
 use crate::CASPER;
