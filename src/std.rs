@@ -9,7 +9,7 @@ use ::std::{
     },
     path::Path,
 };
-use nix::sys::socket::{listen, AddressFamily, SockFlag, SockType};
+use nix::sys::socket::{listen, AddressFamily, Backlog, SockFlag, SockType};
 
 use super::CapNetAgent;
 
@@ -45,10 +45,7 @@ impl TcpListenerExt for TcpListener {
         A: ToSocketAddrs,
     {
         let s: TcpListener = agent.bind_std_to_addrs(addrs)?;
-        // -1 means "max value", and it's what the standard library does.  It's
-        // a Nix bug that we can't use -1 here.
-        // https://github.com/nix-rust/nix/issues/2264
-        listen(&s, -1i32 as usize)?;
+        listen(&s, Backlog::MAXALLOWABLE)?;
         Ok(s)
     }
 }
@@ -249,10 +246,7 @@ impl UnixListenerExt for UnixListener {
         P: AsRef<Path>,
     {
         let s = agent.bind_std_unix(SockType::Stream, path)?;
-        // -1 means "max value", and it's what the standard library does.  It's
-        // a Nix bug that we can't use -1 here.
-        // https://github.com/nix-rust/nix/issues/2264
-        listen(&s, -1i32 as usize)?;
+        listen(&s, Backlog::MAXALLOWABLE)?;
         Ok(UnixListener::from(s))
     }
 }
