@@ -5,7 +5,7 @@ use std::{
     os::fd::AsRawFd,
 };
 
-use capsicum_net::{CasperExt, TcpListenerExt, UdpSocketExt, UnixDatagramExt};
+use capsicum_net::{CasperExt, TcpListenerExt, UdpSocketExt, UnixDatagramExt, UnixListenerExt};
 use tempfile::TempDir;
 
 use crate::CASPER;
@@ -138,6 +138,29 @@ mod bind {
             let socket = UnixDatagram::cap_bind(&mut cap_net, &path).unwrap();
 
             // We can't use UnixDatagram::local_addr due to
+            // https://github.com/rust-lang/rust/issues/118925 , so use nix's
+            // gethostname instead.
+            let bound: nix::sys::socket::UnixAddr =
+                nix::sys::socket::getsockname(socket.as_raw_fd()).unwrap();
+            assert_eq!(path, bound.path().unwrap());
+        }
+    }
+
+    mod unix_listener {
+        use std::os::unix::net::UnixListener;
+
+        use super::*;
+
+        #[test]
+        fn ok() {
+            let mut casper = CASPER.get().unwrap().lock().unwrap();
+            let mut cap_net = casper.net().unwrap();
+
+            let dir = TempDir::new().unwrap();
+            let path = dir.path().join("sock");
+            let socket = UnixListener::cap_bind(&mut cap_net, &path).unwrap();
+
+            // We can't use UnixListener::local_addr due to
             // https://github.com/rust-lang/rust/issues/118925 , so use nix's
             // gethostname instead.
             let bound: nix::sys::socket::UnixAddr =

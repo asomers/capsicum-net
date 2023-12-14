@@ -50,7 +50,7 @@ use std::{
     net::{TcpListener, ToSocketAddrs, UdpSocket},
     os::{
         fd::{AsFd, AsRawFd, OwnedFd},
-        unix::net::UnixDatagram,
+        unix::net::{UnixDatagram, UnixListener},
     },
     path::Path,
 };
@@ -66,6 +66,7 @@ use nix::{
         SockaddrIn,
         SockaddrIn6,
         SockaddrLike,
+        listen
     },
     Result,
 };
@@ -372,5 +373,54 @@ impl UnixDatagramExt for UnixDatagram {
         let want = nix::sys::socket::UnixAddr::new(path.as_ref()).unwrap();
         agent.bind(&s, &want)?;
         Ok(UnixDatagram::from(s))
+    }
+}
+
+/// Adds extra features to `std::os::unix::net::UnixListener` that require
+/// Casper.
+pub trait UnixListenerExt {
+    /// Bind a `std::net::UdpSocket` to a port.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use std::{io, str::FromStr, os::unix::net::UnixListener };
+    ///
+    /// use capsicum::casper::Casper;
+    /// use capsicum_net::{CasperExt, UnixListenerExt};
+    ///
+    /// // Safe because we are single-threaded
+    /// let mut casper = unsafe { Casper::new().unwrap() };
+    /// let mut cap_net = casper.net().unwrap();
+    ///
+    /// let path = "/var/run/foo.sock";
+    /// let socket = UnixListener::cap_bind(&mut cap_net, &path).unwrap();
+    /// ```
+    fn cap_bind<P>(
+        agent: &mut CapNetAgent,
+        path: P,
+    ) -> io::Result<UnixListener>
+    where
+        P: AsRef<Path>;
+}
+
+impl UnixListenerExt for UnixListener {
+    fn cap_bind<P>(agent: &mut CapNetAgent, path: P) -> io::Result<UnixListener>
+    where
+        P: AsRef<Path>,
+    {
+        let s = nix::sys::socket::socket(
+            AddressFamily::Unix,
+            SockType::Stream,
+            SockFlag::empty(),
+            None,
+        )
+        .unwrap();
+        let want = nix::sys::socket::UnixAddr::new(path.as_ref()).unwrap();
+        agent.bind(&s, &want)?;
+        // -1 means "max value", and it's what the standard library does.  It's
+        // a Nix bug that we can't use -1 here.
+        // https://github.com/nix-rust/nix/issues/2264
+        listen(&s, -1i32 as usize)?;
+        Ok(UnixListener::from(s))
     }
 }
