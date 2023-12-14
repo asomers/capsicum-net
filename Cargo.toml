@@ -24,13 +24,12 @@ default = []
 capsicum = { version = "0.3.0", features = ["casper"] }
 casper-sys = { version = "0.1.1" }
 cstr = "0.2.0"
-libc = "0.2.147"
-nix = { version = "0.27.0", features = [ "net", "socket" ] }
+libc = "0.2.150"
+nix = { version = "0.27.1", features = [ "net", "socket" ] }
 tokio = { version = "1.27.0", default-features = false, features = ["net"], optional = true}
 
 [dev-dependencies]
 ctor = "0.2.3"
-libc = "0.2.147"
 tempfile = "3.4"
 tokio = { version = "1.27.0", features = ["macros", "rt"] }
 
@@ -41,3 +40,5 @@ path = "tests/functional/mod.rs"
 [patch.crates-io]
 capsicum = { git = "https://github.com/asomers/capsicum-rs", rev = "f5fd1e6"}
 casper-sys = { git = "https://github.com/asomers/capsicum-rs", rev = "f5fd1e6"}
+libc = { git = "https://github.com/rust-lang/libc", rev = "f37806e499409eab8cfa897280a869bc5e2623a9" }
+nix = { git = "https://github.com/asomers/nix", rev = "34eec97" }
