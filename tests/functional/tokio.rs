@@ -6,6 +6,7 @@ use capsicum_net::{
     CasperExt,
 };
 use tempfile::TempDir;
+use tokio::net::{TcpSocket, UdpSocket, UnixDatagram};
 
 use crate::{
     std::{get_local_in, get_local_in6},
@@ -24,7 +25,7 @@ mod bind {
             let mut cap_net = casper.net().unwrap();
 
             let want = get_local_in();
-            let socket = tokio::net::TcpSocket::new_v6().unwrap();
+            let socket = TcpSocket::new_v6().unwrap();
             let err = socket.cap_bind(&mut cap_net, want).unwrap_err();
             assert_eq!(err.raw_os_error(), Some(libc::EAFNOSUPPORT));
         }
@@ -35,7 +36,7 @@ mod bind {
             let mut cap_net = casper.net().unwrap();
 
             let want = get_local_in();
-            let socket = tokio::net::TcpSocket::new_v4().unwrap();
+            let socket = TcpSocket::new_v4().unwrap();
             socket.cap_bind(&mut cap_net, want).unwrap();
             let bound = socket.local_addr().unwrap();
             assert_eq!(want, bound);
@@ -47,7 +48,7 @@ mod bind {
             let mut cap_net = casper.net().unwrap();
 
             let want = get_local_in6();
-            let socket = tokio::net::TcpSocket::new_v6().unwrap();
+            let socket = TcpSocket::new_v6().unwrap();
             socket.cap_bind(&mut cap_net, want).unwrap();
             let bound = socket.local_addr().unwrap();
             assert_eq!(want, bound);
@@ -65,8 +66,7 @@ mod bind {
             };
 
             let want = get_local_in();
-            let socket =
-                UdpSocketExt::cap_bind(&mut cap_net, want).await.unwrap();
+            let socket = UdpSocket::cap_bind(&mut cap_net, want).unwrap();
             let bound = socket.local_addr().unwrap();
             assert_eq!(want, bound);
         }
@@ -79,8 +79,7 @@ mod bind {
             };
 
             let want = get_local_in6();
-            let socket =
-                UdpSocketExt::cap_bind(&mut cap_net, want).await.unwrap();
+            let socket = UdpSocket::cap_bind(&mut cap_net, want).unwrap();
             let bound = socket.local_addr().unwrap();
             assert_eq!(want, bound);
         }
@@ -98,8 +97,7 @@ mod bind {
 
             let dir = TempDir::new().unwrap();
             let path = dir.path().join("sock");
-            let socket =
-                UnixDatagramExt::cap_bind(&mut cap_net, &path).unwrap();
+            let socket = UnixDatagram::cap_bind(&mut cap_net, &path).unwrap();
 
             // We can't use UnixDatagram::local_addr due to
             // https://github.com/rust-lang/rust/issues/118925 , so use nix's

@@ -53,13 +53,8 @@ impl TcpSocketExt for TcpSocket {
     }
 }
 
-/// Extension "trait" for `tokio::net::UdpSocket`.
-///
-/// It functions like an extension trait with only static methods, though it's
-/// technically a struct.
-pub struct UdpSocketExt {}
-
-impl UdpSocketExt {
+/// Adds extra features to `tokio::net::UdpSocket` that require Casper.
+pub trait UdpSocketExt {
     /// Bind a `tokio::net::UdpSocket` to a port.
     ///
     /// # Examples
@@ -77,7 +72,7 @@ impl UdpSocketExt {
     ///     let mut cap_net = casper.net().unwrap();
     ///
     ///     let addr = "127.0.0.1:8082";
-    ///     let socket = UdpSocketExt::cap_bind(&mut cap_net, addr).await?;
+    ///     let socket = UdpSocket::cap_bind(&mut cap_net, addr)?;
     ///
     ///     Ok(())
     /// }
@@ -85,7 +80,14 @@ impl UdpSocketExt {
     // This function takes std::net::ToSocketAddrs instead of
     // tokio::net::ToSocketAddrs because the latter has no publicly available
     // methods.
-    pub async fn cap_bind<A: ToSocketAddrs>(
+    fn cap_bind<A: ToSocketAddrs>(
+        agent: &mut CapNetAgent,
+        addrs: A,
+    ) -> io::Result<UdpSocket>;
+}
+
+impl UdpSocketExt for UdpSocket {
+    fn cap_bind<A: ToSocketAddrs>(
         agent: &mut CapNetAgent,
         addrs: A,
     ) -> io::Result<UdpSocket> {
@@ -97,12 +99,8 @@ impl UdpSocketExt {
     }
 }
 
-/// Extension "trait" for `tokio::net::UnixDatagram`.
-///
-/// It functions like an extension trait with only static methods, though it's
-/// technically a struct.
-pub struct UnixDatagramExt {}
-impl UnixDatagramExt {
+/// Adds extra features to `tokio::net::UnixDatagram` that require Casper.
+pub trait UnixDatagramExt {
     /// Bind a `tokio::net::UnixDatagram` to a port.
     ///
     /// # Examples
@@ -120,15 +118,20 @@ impl UnixDatagramExt {
     ///     let mut cap_net = casper.net().unwrap();
     ///
     ///     let path = "/var/run/foo.sock";
-    ///     let socket = UnixDatagramExt::cap_bind(&mut cap_net, path)?;
+    ///     let socket = UnixDatagram::cap_bind(&mut cap_net, path)?;
     ///
     ///     Ok(())
     /// }
     /// ```
-    pub fn cap_bind<P>(
+    fn cap_bind<P>(
         agent: &mut CapNetAgent,
         path: P,
     ) -> io::Result<UnixDatagram>
+    where
+        P: AsRef<Path>;
+}
+impl UnixDatagramExt for UnixDatagram {
+    fn cap_bind<P>(agent: &mut CapNetAgent, path: P) -> io::Result<UnixDatagram>
     where
         P: AsRef<Path>,
     {
