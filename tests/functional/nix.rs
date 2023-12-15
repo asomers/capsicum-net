@@ -1,9 +1,10 @@
 // vim: tw=80
 use std::os::fd::AsRawFd;
 
-use capsicum_net::CasperExt;
+use capsicum_net::{CasperExt, LimitFlags};
 use nix::{
     sys::socket::{
+        getpeername,
         getsockname,
         socket,
         AddressFamily,
@@ -120,52 +121,251 @@ mod bind {
     }
 }
 
-mod limit_bind {
+mod limit {
+    use super::*;
+
+    mod bind {
+        use super::*;
+
+        #[test]
+        fn badmode() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+            let want = get_local_in();
+            let mut limit = cap_net.limit(LimitFlags::CONNECT);
+            limit.bind(&want);
+            limit.limit().unwrap();
+
+            let s = socket(
+                AddressFamily::Inet,
+                SockType::Stream,
+                SockFlag::empty(),
+                None,
+            )
+            .unwrap();
+            let e = cap_net.bind(&s, &want).unwrap_err();
+            assert_eq!(Error::ENOTCAPABLE, e);
+        }
+
+        #[test]
+        fn ipv4_excluded() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+            let limit_to = get_local_in();
+            let want = get_local_in();
+            let mut limit = cap_net.limit(LimitFlags::BIND);
+            limit.bind(&limit_to);
+            limit.limit().unwrap();
+
+            let s = socket(
+                AddressFamily::Inet,
+                SockType::Stream,
+                SockFlag::empty(),
+                None,
+            )
+            .unwrap();
+            let e = cap_net.bind(&s, &want).unwrap_err();
+            assert_eq!(Error::ENOTCAPABLE, e);
+        }
+
+        #[test]
+        fn ipv4_included() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+            let want = get_local_in();
+            let mut limit = cap_net.limit(LimitFlags::BIND);
+            limit.bind(&want);
+            limit.limit().unwrap();
+
+            let s = socket(
+                AddressFamily::Inet,
+                SockType::Stream,
+                SockFlag::empty(),
+                None,
+            )
+            .unwrap();
+            cap_net.bind(&s, &want).unwrap();
+            let bound: SockaddrIn = getsockname(s.as_raw_fd()).unwrap();
+            assert_eq!(want, bound);
+        }
+    }
+
+    mod connect {
+        use super::*;
+
+        #[test]
+        fn badmode() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+            let want = get_local_in();
+            let mut limit = cap_net.limit(LimitFlags::BIND);
+            limit.connect(&want);
+            limit.limit().unwrap();
+
+            let _server_sock =
+                std::net::TcpListener::bind(std::net::SocketAddrV4::from(want));
+
+            let client_sock = socket(
+                AddressFamily::Inet,
+                SockType::Stream,
+                SockFlag::empty(),
+                None,
+            )
+            .unwrap();
+            let e = cap_net.connect(&client_sock, &want).unwrap_err();
+            assert_eq!(Error::ENOTCAPABLE, e);
+        }
+
+        #[test]
+        fn ipv4_excluded() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let want = get_local_in();
+            let limit_to = get_local_in();
+            let _server_sock =
+                std::net::TcpListener::bind(std::net::SocketAddrV4::from(want));
+
+            let mut limit = cap_net.limit(LimitFlags::CONNECT);
+            limit.connect(&limit_to);
+            limit.limit().unwrap();
+
+            let client_sock = socket(
+                AddressFamily::Inet,
+                SockType::Stream,
+                SockFlag::empty(),
+                None,
+            )
+            .unwrap();
+            let e = cap_net.connect(&client_sock, &want).unwrap_err();
+            assert_eq!(Error::ENOTCAPABLE, e);
+        }
+
+        #[test]
+        fn ipv4_included() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let want = get_local_in();
+            let _server_sock =
+                std::net::TcpListener::bind(std::net::SocketAddrV4::from(want));
+
+            let client_sock = socket(
+                AddressFamily::Inet,
+                SockType::Stream,
+                SockFlag::empty(),
+                None,
+            )
+            .unwrap();
+            cap_net.connect(&client_sock, &want).unwrap();
+            let peer = getpeername(client_sock.as_raw_fd()).unwrap();
+            assert_eq!(want, peer);
+        }
+    }
+}
+
+mod connect {
     use super::*;
 
     #[test]
-    fn ipv4_negative() {
+    fn econnrefused() {
         let mut cap_net = {
             let mut casper = CASPER.get().unwrap().lock().unwrap();
             casper.net().unwrap()
         };
-        let limit_to = get_local_in();
-        let want = get_local_in();
-        let mut limit = cap_net.limit();
-        limit.bind(&limit_to);
-        limit.limit().unwrap();
 
-        let s = socket(
+        let want = get_local_in();
+
+        let client_sock = socket(
             AddressFamily::Inet,
             SockType::Stream,
             SockFlag::empty(),
             None,
         )
         .unwrap();
-        let e = cap_net.bind(&s, &want).unwrap_err();
-        assert_eq!(Error::ENOTCAPABLE, e);
+        let e = cap_net.connect(&client_sock, &want).unwrap_err();
+        assert_eq!(Error::ECONNREFUSED, e);
     }
 
     #[test]
-    fn ipv4_postive() {
+    fn ipv4() {
         let mut cap_net = {
             let mut casper = CASPER.get().unwrap().lock().unwrap();
             casper.net().unwrap()
         };
-        let want = get_local_in();
-        let mut limit = cap_net.limit();
-        limit.bind(&want);
-        limit.limit().unwrap();
 
-        let s = socket(
+        let want = get_local_in();
+        let _server_sock =
+            std::net::TcpListener::bind(std::net::SocketAddrV4::from(want));
+
+        let client_sock = socket(
             AddressFamily::Inet,
             SockType::Stream,
             SockFlag::empty(),
             None,
         )
         .unwrap();
-        cap_net.bind(&s, &want).unwrap();
-        let bound: SockaddrIn = getsockname(s.as_raw_fd()).unwrap();
-        assert_eq!(want, bound);
+        cap_net.connect(&client_sock, &want).unwrap();
+        let peer = getpeername(client_sock.as_raw_fd()).unwrap();
+        assert_eq!(want, peer);
+    }
+
+    #[test]
+    fn ipv6() {
+        let mut cap_net = {
+            let mut casper = CASPER.get().unwrap().lock().unwrap();
+            casper.net().unwrap()
+        };
+
+        let want = get_local_in6();
+        let _server_sock =
+            std::net::TcpListener::bind(std::net::SocketAddrV6::from(want));
+
+        let client_sock = socket(
+            AddressFamily::Inet6,
+            SockType::Stream,
+            SockFlag::empty(),
+            None,
+        )
+        .unwrap();
+        cap_net.connect(&client_sock, &want).unwrap();
+        let peer = getpeername(client_sock.as_raw_fd()).unwrap();
+        assert_eq!(want, peer);
+    }
+
+    #[test]
+    fn unix() {
+        let mut cap_net = {
+            let mut casper = CASPER.get().unwrap().lock().unwrap();
+            casper.net().unwrap()
+        };
+
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("sock");
+        let want = UnixAddr::new(&path).unwrap();
+        let _server_sock = std::os::unix::net::UnixListener::bind(&path);
+
+        let client_sock = socket(
+            AddressFamily::Unix,
+            SockType::Stream,
+            SockFlag::empty(),
+            None,
+        )
+        .unwrap();
+        cap_net.connect(&client_sock, &want).unwrap();
+        let peer = getpeername(client_sock.as_raw_fd()).unwrap();
+        assert_eq!(want, peer);
     }
 }

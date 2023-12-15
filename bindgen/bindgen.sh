@@ -9,10 +9,13 @@ use libc::sockaddr;
 HERE
 
 bindgen --allowlist-function 'cap_bind' \
+	--allowlist-function 'cap_connect' \
 	--allowlist-function 'cap_net_limit_init' \
 	--allowlist-function 'cap_net_limit_bind' \
+	--allowlist-function 'cap_net_limit_connect' \
 	--allowlist-function 'cap_net_limit' \
-	--allowlist-item '.*CAPNET_BIND.*' \
+	--allowlist-item '.*CAPNET_BIND' \
+	--allowlist-item '.*CAPNET_CONNECT' \
 	--opaque-type 'cap_net_limit_t' \
 	--blocklist-type 'cap_channel' \
 	--blocklist-type 'cap_channel_t' \

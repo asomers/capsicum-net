@@ -21,6 +21,7 @@ targets = [
 default = []
 
 [dependencies]
+bitflags = { version = "2.4" }
 capsicum = { version = "0.3.0", features = ["casper"] }
 casper-sys = { version = "0.1.1" }
 cstr = "0.2.0"
