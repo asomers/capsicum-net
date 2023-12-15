@@ -49,7 +49,7 @@ use ::std::{
     marker::PhantomData,
     net::{TcpListener, ToSocketAddrs, UdpSocket},
     os::{
-        fd::{AsFd, AsRawFd, OwnedFd},
+        fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
         unix::net::{UnixDatagram, UnixListener},
     },
     path::Path,
@@ -125,7 +125,7 @@ impl CapNetAgent {
     /// Helper that binds a raw socket to a std sockaddr
     fn bind_std_fd(
         &mut self,
-        sock: ::std::os::fd::BorrowedFd,
+        sock: BorrowedFd,
         addr: ::std::net::SocketAddr,
     ) -> io::Result<()> {
         let ap = self.0.as_mut_ptr();
@@ -248,6 +248,64 @@ impl CapNetAgent {
             ffi::cap_connect(self.0.as_mut_ptr(), fd, addr.as_ptr(), addr.len())
         };
         Errno::result(res).map(drop)
+    }
+
+    /// Helper that connects a raw socket to a std sockaddr
+    fn connect_std_fd(
+        &mut self,
+        sock: BorrowedFd,
+        addr: ::std::net::SocketAddr,
+    ) -> io::Result<()> {
+        let ap = self.0.as_mut_ptr();
+        let fd = sock.as_raw_fd();
+        let res = match addr {
+            // Even though std::net::SocketAddrV4 is probably stored identically
+            // to libc::sockaddr_in, that isn't guaranteed, so we must convert
+            // it.  Nix's representation _is_ guaranteed.  Ditto for
+            // SocketAddrV6.
+            // XXX ffi::cap_connect is technically a blocking operation.  It
+            // blocks within the C library.
+            // TODO: determine if Tokio should be using a thread for this.
+            ::std::net::SocketAddr::V4(addr) => {
+                let sin = SockaddrIn::from(addr);
+                unsafe { ffi::cap_connect(ap, fd, sin.as_ptr(), sin.len()) }
+            }
+            ::std::net::SocketAddr::V6(addr) => {
+                let sin6 = SockaddrIn6::from(addr);
+                unsafe { ffi::cap_connect(ap, fd, sin6.as_ptr(), sin6.len()) }
+            }
+        };
+        if res == 0 {
+            Ok(())
+        } else {
+            Err(io::Error::last_os_error())
+        }
+    }
+
+    /// Private helper used by the std extension traits
+    fn connect_std_to_addrs<A>(
+        &mut self,
+        sock: BorrowedFd,
+        addrs: A,
+    ) -> io::Result<()>
+    where
+        A: ToSocketAddrs,
+    {
+        let mut last_err = None;
+        for addr in addrs.to_socket_addrs()? {
+            match self.connect_std_fd(sock, addr) {
+                Ok(()) => return Ok(()),
+                Err(e) => {
+                    last_err = Some(e);
+                }
+            }
+        }
+        Err(last_err.unwrap_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "could not resolve to any addresses",
+            )
+        }))
     }
 
     /// Return an opaque handle used to further limit the capabilities of the

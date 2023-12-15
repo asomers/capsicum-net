@@ -63,6 +63,30 @@ pub trait UdpSocketExt {
     fn cap_bind<A>(agent: &mut CapNetAgent, addr: A) -> io::Result<UdpSocket>
     where
         A: ToSocketAddrs;
+
+    /// Connects this UDP socket to a remote address, using a `cap_net` service.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use std::{io, str::FromStr, net::UdpSocket };
+    ///
+    /// use capsicum::casper::Casper;
+    /// use capsicum_net::{CasperExt, std::UdpSocketExt};
+    ///
+    /// // Safe because we are single-threaded
+    /// let mut casper = unsafe { Casper::new().unwrap() };
+    /// let mut cap_net = casper.net().unwrap();
+    ///
+    /// let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
+    /// socket.cap_connect(&mut cap_net, "8.8.8.8:53").unwrap();
+    /// ```
+    fn cap_connect<A>(
+        &self,
+        agent: &mut CapNetAgent,
+        addrs: A,
+    ) -> io::Result<()>
+    where
+        A: ToSocketAddrs;
 }
 
 impl UdpSocketExt for UdpSocket {
@@ -71,6 +95,17 @@ impl UdpSocketExt for UdpSocket {
         A: ToSocketAddrs,
     {
         agent.bind_std_to_addrs(addrs)
+    }
+
+    fn cap_connect<A>(
+        &self,
+        agent: &mut CapNetAgent,
+        addrs: A,
+    ) -> io::Result<()>
+    where
+        A: ToSocketAddrs,
+    {
+        agent.connect_std_to_addrs(self.as_fd(), addrs)
     }
 }
 

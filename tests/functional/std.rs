@@ -146,6 +146,38 @@ mod udp_socket {
             assert_eq!(want, bound);
         }
     }
+
+    mod connect {
+        use super::*;
+
+        #[test]
+        fn ipv4() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let want = get_local_in();
+            let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
+            socket.cap_connect(&mut cap_net, &want).unwrap();
+            let connected = socket.peer_addr().unwrap();
+            assert_eq!(want, connected);
+        }
+
+        #[test]
+        fn ipv6() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let want = get_local_in6();
+            let socket = UdpSocket::bind("[::0]:0").unwrap();
+            socket.cap_connect(&mut cap_net, &want).unwrap();
+            let connected = socket.peer_addr().unwrap();
+            assert_eq!(want, connected);
+        }
+    }
 }
 
 mod unix_datagram {
