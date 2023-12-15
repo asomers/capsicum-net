@@ -189,6 +189,27 @@ impl CapNetAgent {
         }))
     }
 
+    /// Helper that creates a new std socket and binds it to a unix path
+    fn bind_std_unix<P>(
+        &mut self,
+        sock_type: SockType,
+        path: P,
+    ) -> io::Result<OwnedFd>
+    where
+        P: AsRef<Path>,
+    {
+        let s = nix::sys::socket::socket(
+            AddressFamily::Unix,
+            sock_type,
+            SockFlag::empty(),
+            None,
+        )
+        .unwrap();
+        let want = nix::sys::socket::UnixAddr::new(path.as_ref()).unwrap();
+        self.bind(&s, &want)?;
+        Ok(s)
+    }
+
     /// Return an opaque handle used to further limit the capabilities of the
     /// `cap_net` service.
     ///
@@ -363,15 +384,7 @@ impl UnixDatagramExt for UnixDatagram {
     where
         P: AsRef<Path>,
     {
-        let s = nix::sys::socket::socket(
-            AddressFamily::Unix,
-            SockType::Datagram,
-            SockFlag::empty(),
-            None,
-        )
-        .unwrap();
-        let want = nix::sys::socket::UnixAddr::new(path.as_ref()).unwrap();
-        agent.bind(&s, &want)?;
+        let s = agent.bind_std_unix(SockType::Datagram, path)?;
         Ok(UnixDatagram::from(s))
     }
 }
@@ -408,15 +421,7 @@ impl UnixListenerExt for UnixListener {
     where
         P: AsRef<Path>,
     {
-        let s = nix::sys::socket::socket(
-            AddressFamily::Unix,
-            SockType::Stream,
-            SockFlag::empty(),
-            None,
-        )
-        .unwrap();
-        let want = nix::sys::socket::UnixAddr::new(path.as_ref()).unwrap();
-        agent.bind(&s, &want)?;
+        let s = agent.bind_std_unix(SockType::Stream, path)?;
         // -1 means "max value", and it's what the standard library does.  It's
         // a Nix bug that we can't use -1 here.
         // https://github.com/nix-rust/nix/issues/2264
