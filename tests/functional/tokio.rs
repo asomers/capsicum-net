@@ -1,22 +1,21 @@
 // vim: tw=80
 use std::os::fd::AsRawFd;
 
-use capsicum_net::{
-    tokio::{TcpSocketExt, UdpSocketExt, UnixDatagramExt},
-    CasperExt,
-};
+use capsicum_net::CasperExt;
 use tempfile::TempDir;
-use tokio::net::{TcpSocket, UdpSocket, UnixDatagram};
 
 use crate::{
     std::{get_local_in, get_local_in6},
     CASPER,
 };
 
-mod bind {
+mod tcp_socket {
+    use capsicum_net::tokio::TcpSocketExt;
+    use tokio::net::TcpSocket;
+
     use super::*;
 
-    mod tcp {
+    mod bind {
         use super::*;
 
         #[tokio::test]
@@ -54,8 +53,15 @@ mod bind {
             assert_eq!(want, bound);
         }
     }
+}
 
-    mod udp {
+mod udp_socket {
+    use capsicum_net::tokio::UdpSocketExt;
+    use tokio::net::UdpSocket;
+
+    use super::*;
+
+    mod bind {
         use super::*;
 
         #[tokio::test]
@@ -84,8 +90,15 @@ mod bind {
             assert_eq!(want, bound);
         }
     }
+}
 
-    mod unix {
+mod unix_datagram {
+    use capsicum_net::tokio::UnixDatagramExt;
+    use tokio::net::UnixDatagram;
+
+    use super::*;
+
+    mod bind {
         use super::*;
 
         #[tokio::test]

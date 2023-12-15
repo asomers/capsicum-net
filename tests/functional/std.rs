@@ -5,13 +5,7 @@ use std::{
     os::fd::AsRawFd,
 };
 
-use capsicum_net::{
-    CasperExt,
-    TcpListenerExt,
-    UdpSocketExt,
-    UnixDatagramExt,
-    UnixListenerExt,
-};
+use capsicum_net::CasperExt;
 use tempfile::TempDir;
 
 use crate::CASPER;
@@ -26,12 +20,14 @@ pub fn get_local_in6() -> SocketAddr {
     SocketAddrV6::new(Ipv6Addr::LOCALHOST, crate::next_port(), 0, 0).into()
 }
 
-mod bind {
+mod tcp_listener {
+    use std::net::TcpListener;
+
+    use capsicum_net::TcpListenerExt;
+
     use super::*;
 
-    mod tcp {
-        use std::net::TcpListener;
-
+    mod bind {
         use super::*;
 
         #[test]
@@ -78,10 +74,16 @@ mod bind {
             assert_eq!(want, bound);
         }
     }
+}
 
-    mod udp {
-        use std::net::UdpSocket;
+mod udp_socket {
+    use std::net::UdpSocket;
 
+    use capsicum_net::UdpSocketExt;
+
+    use super::*;
+
+    mod bind {
         use super::*;
 
         #[test]
@@ -128,10 +130,16 @@ mod bind {
             assert_eq!(want, bound);
         }
     }
+}
 
-    mod unix_datagram {
-        use std::os::unix::net::UnixDatagram;
+mod unix_datagram {
+    use std::os::unix::net::UnixDatagram;
 
+    use capsicum_net::UnixDatagramExt;
+
+    use super::*;
+
+    mod bind {
         use super::*;
 
         #[test]
@@ -151,10 +159,16 @@ mod bind {
             assert_eq!(path, bound.path().unwrap());
         }
     }
+}
 
-    mod unix_listener {
-        use std::os::unix::net::UnixListener;
+mod unix_listener {
+    use std::os::unix::net::UnixListener;
 
+    use capsicum_net::UnixListenerExt;
+
+    use super::*;
+
+    mod bind {
         use super::*;
 
         #[test]
