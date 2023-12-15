@@ -23,7 +23,7 @@ pub fn get_local_in6() -> SocketAddr {
 mod tcp_listener {
     use std::net::TcpListener;
 
-    use capsicum_net::TcpListenerExt;
+    use capsicum_net::std::TcpListenerExt;
 
     use super::*;
 
@@ -79,7 +79,7 @@ mod tcp_listener {
 mod udp_socket {
     use std::net::UdpSocket;
 
-    use capsicum_net::UdpSocketExt;
+    use capsicum_net::std::UdpSocketExt;
 
     use super::*;
 
@@ -135,7 +135,7 @@ mod udp_socket {
 mod unix_datagram {
     use std::os::unix::net::UnixDatagram;
 
-    use capsicum_net::UnixDatagramExt;
+    use capsicum_net::std::UnixDatagramExt;
 
     use super::*;
 
@@ -164,7 +164,7 @@ mod unix_datagram {
 mod unix_listener {
     use std::os::unix::net::UnixListener;
 
-    use capsicum_net::UnixListenerExt;
+    use capsicum_net::std::UnixListenerExt;
 
     use super::*;
 

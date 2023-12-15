@@ -91,9 +91,10 @@ impl UdpSocketExt for UdpSocket {
         agent: &mut CapNetAgent,
         addrs: A,
     ) -> io::Result<UdpSocket> {
-        let std_sock = <std::net::UdpSocket as crate::UdpSocketExt>::cap_bind(
-            agent, addrs,
-        )?;
+        let std_sock =
+            <std::net::UdpSocket as crate::std::UdpSocketExt>::cap_bind(
+                agent, addrs,
+            )?;
         std_sock.set_nonblocking(true)?;
         UdpSocket::from_std(std_sock)
     }
@@ -135,7 +136,7 @@ impl UnixDatagramExt for UnixDatagram {
     where
         P: AsRef<Path>,
     {
-        let std_sock = <std::os::unix::net::UnixDatagram as crate::UnixDatagramExt>::cap_bind(
+        let std_sock = <std::os::unix::net::UnixDatagram as crate::std::UnixDatagramExt>::cap_bind(
             agent, path,
         )?;
         std_sock.set_nonblocking(true)?;
