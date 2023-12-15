@@ -40,8 +40,10 @@ mod bind {
 
     #[test]
     fn eafnosupport() {
-        let mut casper = CASPER.get().unwrap().lock().unwrap();
-        let mut cap_net = casper.net().unwrap();
+        let mut cap_net = {
+            let mut casper = CASPER.get().unwrap().lock().unwrap();
+            casper.net().unwrap()
+        };
 
         let s = socket(
             AddressFamily::Inet6,
@@ -57,8 +59,10 @@ mod bind {
 
     #[test]
     fn ipv4() {
-        let mut casper = CASPER.get().unwrap().lock().unwrap();
-        let mut cap_net = casper.net().unwrap();
+        let mut cap_net = {
+            let mut casper = CASPER.get().unwrap().lock().unwrap();
+            casper.net().unwrap()
+        };
 
         let s = socket(
             AddressFamily::Inet,
@@ -75,8 +79,10 @@ mod bind {
 
     #[test]
     fn ipv6() {
-        let mut casper = CASPER.get().unwrap().lock().unwrap();
-        let mut cap_net = casper.net().unwrap();
+        let mut cap_net = {
+            let mut casper = CASPER.get().unwrap().lock().unwrap();
+            casper.net().unwrap()
+        };
 
         let s = socket(
             AddressFamily::Inet6,
@@ -93,8 +99,10 @@ mod bind {
 
     #[test]
     fn unix() {
-        let mut casper = CASPER.get().unwrap().lock().unwrap();
-        let mut cap_net = casper.net().unwrap();
+        let mut cap_net = {
+            let mut casper = CASPER.get().unwrap().lock().unwrap();
+            casper.net().unwrap()
+        };
 
         let s = socket(
             AddressFamily::Unix,
@@ -117,8 +125,10 @@ mod limit_bind {
 
     #[test]
     fn ipv4_negative() {
-        let mut casper = CASPER.get().unwrap().lock().unwrap();
-        let mut cap_net = casper.net().unwrap();
+        let mut cap_net = {
+            let mut casper = CASPER.get().unwrap().lock().unwrap();
+            casper.net().unwrap()
+        };
         let limit_to = get_local_in();
         let want = get_local_in();
         let mut limit = cap_net.limit();
@@ -138,8 +148,10 @@ mod limit_bind {
 
     #[test]
     fn ipv4_postive() {
-        let mut casper = CASPER.get().unwrap().lock().unwrap();
-        let mut cap_net = casper.net().unwrap();
+        let mut cap_net = {
+            let mut casper = CASPER.get().unwrap().lock().unwrap();
+            casper.net().unwrap()
+        };
         let want = get_local_in();
         let mut limit = cap_net.limit();
         limit.bind(&want);

@@ -20,8 +20,10 @@ mod tcp_socket {
 
         #[tokio::test]
         async fn eafnosupport() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let want = get_local_in();
             let socket = TcpSocket::new_v6().unwrap();
@@ -31,8 +33,10 @@ mod tcp_socket {
 
         #[tokio::test]
         async fn ipv4() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let want = get_local_in();
             let socket = TcpSocket::new_v4().unwrap();
@@ -43,8 +47,10 @@ mod tcp_socket {
 
         #[tokio::test]
         async fn ipv6() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let want = get_local_in6();
             let socket = TcpSocket::new_v6().unwrap();

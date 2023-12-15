@@ -32,8 +32,10 @@ mod tcp_listener {
 
         #[test]
         fn eaddrinuse() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let want = get_local_in();
             let _socket1 = TcpListener::cap_bind(&mut cap_net, want).unwrap();
@@ -43,8 +45,10 @@ mod tcp_listener {
 
         #[test]
         fn no_addresses() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let addrs: Vec<SocketAddr> = Vec::new();
             let err =
@@ -54,8 +58,10 @@ mod tcp_listener {
 
         #[test]
         fn ipv4() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let want = get_local_in();
             let socket = TcpListener::cap_bind(&mut cap_net, want).unwrap();
@@ -65,8 +71,10 @@ mod tcp_listener {
 
         #[test]
         fn ipv6() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let want = get_local_in6();
             let socket = TcpListener::cap_bind(&mut cap_net, want).unwrap();
@@ -88,8 +96,10 @@ mod udp_socket {
 
         #[test]
         fn eaddrinuse() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let want = get_local_in();
             let _socket1 = UdpSocket::cap_bind(&mut cap_net, want).unwrap();
@@ -99,8 +109,10 @@ mod udp_socket {
 
         #[test]
         fn no_addresses() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let addrs: Vec<SocketAddr> = Vec::new();
             let err =
@@ -110,8 +122,10 @@ mod udp_socket {
 
         #[test]
         fn ipv4() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let want = get_local_in();
             let socket = UdpSocket::cap_bind(&mut cap_net, want).unwrap();
@@ -121,8 +135,10 @@ mod udp_socket {
 
         #[test]
         fn ipv6() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let want = get_local_in6();
             let socket = UdpSocket::cap_bind(&mut cap_net, want).unwrap();
@@ -144,8 +160,10 @@ mod unix_datagram {
 
         #[test]
         fn ok() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let dir = TempDir::new().unwrap();
             let path = dir.path().join("sock");
@@ -173,8 +191,10 @@ mod unix_listener {
 
         #[test]
         fn ok() {
-            let mut casper = CASPER.get().unwrap().lock().unwrap();
-            let mut cap_net = casper.net().unwrap();
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
 
             let dir = TempDir::new().unwrap();
             let path = dir.path().join("sock");
