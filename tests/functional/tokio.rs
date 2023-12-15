@@ -121,3 +121,33 @@ mod unix_datagram {
         }
     }
 }
+
+mod unix_listener {
+    use capsicum_net::tokio::UnixListenerExt;
+    use tokio::net::UnixListener;
+
+    use super::*;
+
+    mod bind {
+        use super::*;
+
+        #[tokio::test]
+        async fn listener() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let dir = TempDir::new().unwrap();
+            let path = dir.path().join("sock");
+            let socket = UnixListener::cap_bind(&mut cap_net, &path).unwrap();
+
+            // We can't use UnixListener::local_addr due to
+            // https://github.com/rust-lang/rust/issues/118925 , so use nix's
+            // gethostname instead.
+            let bound: nix::sys::socket::UnixAddr =
+                nix::sys::socket::getsockname(socket.as_raw_fd()).unwrap();
+            assert_eq!(path, bound.path().unwrap());
+        }
+    }
+}

@@ -4,7 +4,7 @@
 #![cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 use std::{io, net::ToSocketAddrs, os::fd::AsFd, path::Path};
 
-use tokio::net::{TcpSocket, UdpSocket, UnixDatagram};
+use tokio::net::{TcpSocket, UdpSocket, UnixDatagram, UnixListener};
 
 use super::CapNetAgent;
 
@@ -141,5 +141,49 @@ impl UnixDatagramExt for UnixDatagram {
         )?;
         std_sock.set_nonblocking(true)?;
         UnixDatagram::from_std(std_sock)
+    }
+}
+
+/// Adds extra features to `tokio::net::UnixListener` that require Casper.
+pub trait UnixListenerExt {
+    /// Bind a `tokio::net::UnixListener` to a port.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use std::{io, str::FromStr };
+    ///
+    /// use capsicum::casper::Casper;
+    /// use capsicum_net::{CasperExt, tokio::UnixListenerExt};
+    /// use tokio::net::UnixListener;
+    ///
+    /// #[tokio::main(flavor = "current_thread")]
+    /// async fn main() -> io::Result<()> {
+    ///     // Safe because we are single-threaded
+    ///     let mut casper = unsafe { Casper::new().unwrap() };
+    ///     let mut cap_net = casper.net().unwrap();
+    ///
+    ///     let path = "/var/run/foo.sock";
+    ///     let socket = UnixListener::cap_bind(&mut cap_net, path)?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    fn cap_bind<P>(
+        agent: &mut CapNetAgent,
+        path: P,
+    ) -> io::Result<UnixListener>
+    where
+        P: AsRef<Path>;
+}
+impl UnixListenerExt for UnixListener {
+    fn cap_bind<P>(agent: &mut CapNetAgent, path: P) -> io::Result<UnixListener>
+    where
+        P: AsRef<Path>,
+    {
+        let std_sock = <std::os::unix::net::UnixListener as crate::std::UnixListenerExt>::cap_bind(
+            agent, path,
+        )?;
+        std_sock.set_nonblocking(true)?;
+        UnixListener::from_std(std_sock)
     }
 }
