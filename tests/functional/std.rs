@@ -84,6 +84,60 @@ mod tcp_listener {
     }
 }
 
+mod tcp_stream {
+    use std::net::{TcpListener, TcpStream};
+
+    use capsicum_net::std::TcpStreamExt;
+
+    use super::*;
+
+    mod connect {
+        use super::*;
+
+        #[test]
+        fn econnrefused() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let want = get_local_in();
+            let err = TcpStream::cap_connect(&mut cap_net, want).unwrap_err();
+            assert_eq!(err.raw_os_error(), Some(libc::ECONNREFUSED));
+        }
+
+        #[test]
+        fn ipv4() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let want = get_local_in();
+            let _server_socket = TcpListener::bind(want).unwrap();
+            let client_socket =
+                TcpStream::cap_connect(&mut cap_net, want).unwrap();
+            let connected = client_socket.peer_addr().unwrap();
+            assert_eq!(want, connected);
+        }
+
+        #[test]
+        fn ipv6() {
+            let mut cap_net = {
+                let mut casper = CASPER.get().unwrap().lock().unwrap();
+                casper.net().unwrap()
+            };
+
+            let want = get_local_in6();
+            let _server_socket = TcpListener::bind(want).unwrap();
+            let client_socket =
+                TcpStream::cap_connect(&mut cap_net, want).unwrap();
+            let connected = client_socket.peer_addr().unwrap();
+            assert_eq!(want, connected);
+        }
+    }
+}
+
 mod udp_socket {
     use std::net::UdpSocket;
 
@@ -159,7 +213,7 @@ mod udp_socket {
 
             let want = get_local_in();
             let socket = UdpSocket::bind("0.0.0.0:0").unwrap();
-            socket.cap_connect(&mut cap_net, &want).unwrap();
+            socket.cap_connect(&mut cap_net, want).unwrap();
             let connected = socket.peer_addr().unwrap();
             assert_eq!(want, connected);
         }
@@ -173,7 +227,7 @@ mod udp_socket {
 
             let want = get_local_in6();
             let socket = UdpSocket::bind("[::0]:0").unwrap();
-            socket.cap_connect(&mut cap_net, &want).unwrap();
+            socket.cap_connect(&mut cap_net, want).unwrap();
             let connected = socket.peer_addr().unwrap();
             assert_eq!(want, connected);
         }

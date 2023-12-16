@@ -1,18 +1,17 @@
 // vim: tw=80
 //! Extension traits for socket types from the standard library
-use super::CapNetAgent;
-
 use ::std::{
     io,
-    net::{TcpListener, ToSocketAddrs, UdpSocket},
+    net::{TcpListener, TcpStream, ToSocketAddrs, UdpSocket},
     os::{
         fd::AsFd,
         unix::net::{UnixDatagram, UnixListener},
     },
     path::Path,
 };
+use nix::sys::socket::{listen, AddressFamily, SockFlag, SockType};
 
-use nix::sys::socket::{listen, SockType};
+use super::CapNetAgent;
 
 /// Adds extra features to `std::net::TcpListener` that require Casper.
 pub trait TcpListenerExt {
@@ -51,6 +50,65 @@ impl TcpListenerExt for TcpListener {
         // https://github.com/nix-rust/nix/issues/2264
         listen(&s, -1i32 as usize)?;
         Ok(s)
+    }
+}
+
+/// Adds extra features to `std::net::TcpStream` that require Casper.
+pub trait TcpStreamExt {
+    /// Open a TCP connection to a remote host, connecting via a `cap_net`
+    /// service.
+    ///
+    /// # Examples
+    /// ```no_run
+    /// use std::{io, str::FromStr, net::TcpStream };
+    ///
+    /// use capsicum::casper::Casper;
+    /// use capsicum_net::{CasperExt, std::TcpStreamExt};
+    ///
+    /// // Safe because we are single-threaded
+    /// let mut casper = unsafe { Casper::new().unwrap() };
+    /// let mut cap_net = casper.net().unwrap();
+    ///
+    /// let sock = TcpStream::cap_connect(&mut cap_net, "8.8.8.8:53").unwrap();
+    /// ```
+    fn cap_connect<A: ToSocketAddrs>(
+        agent: &mut CapNetAgent,
+        addrs: A,
+    ) -> io::Result<TcpStream>;
+}
+
+impl TcpStreamExt for TcpStream {
+    fn cap_connect<A: ToSocketAddrs>(
+        agent: &mut CapNetAgent,
+        addrs: A,
+    ) -> io::Result<TcpStream> {
+        let mut last_err = None;
+        for addr in addrs.to_socket_addrs()? {
+            let family = if addr.is_ipv4() {
+                AddressFamily::Inet
+            } else {
+                AddressFamily::Inet6
+            };
+            let sock = nix::sys::socket::socket(
+                family,
+                SockType::Stream,
+                SockFlag::empty(),
+                None,
+            )
+            .map_err(io::Error::from)?;
+            match agent.connect_std_fd(sock.as_fd(), addr) {
+                Ok(()) => return Ok(TcpStream::from(sock)),
+                Err(e) => {
+                    last_err = Some(e);
+                }
+            }
+        }
+        Err(last_err.unwrap_or_else(|| {
+            io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "could not resolve to any addresses",
+            )
+        }))
     }
 }
 

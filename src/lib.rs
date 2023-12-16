@@ -47,7 +47,7 @@
 use ::std::{
     io,
     marker::PhantomData,
-    net::{ToSocketAddrs},
+    net::ToSocketAddrs,
     os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
     path::Path,
 };
