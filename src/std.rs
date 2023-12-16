@@ -1,6 +1,18 @@
 // vim: tw=80
 //! Extension traits for socket types from the standard library
-use super::*;
+use super::CapNetAgent;
+
+use ::std::{
+    io,
+    net::{TcpListener, ToSocketAddrs, UdpSocket},
+    os::{
+        fd::AsFd,
+        unix::net::{UnixDatagram, UnixListener},
+    },
+    path::Path,
+};
+
+use nix::sys::socket::{listen, SockType};
 
 /// Adds extra features to `std::net::TcpListener` that require Casper.
 pub trait TcpListenerExt {

@@ -47,11 +47,8 @@
 use ::std::{
     io,
     marker::PhantomData,
-    net::{TcpListener, ToSocketAddrs, UdpSocket},
-    os::{
-        fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
-        unix::net::{UnixDatagram, UnixListener},
-    },
+    net::{ToSocketAddrs},
+    os::fd::{AsFd, AsRawFd, BorrowedFd, OwnedFd},
     path::Path,
 };
 use bitflags::bitflags;
@@ -60,7 +57,6 @@ use cstr::cstr;
 use nix::{
     errno::Errno,
     sys::socket::{
-        listen,
         AddressFamily,
         SockFlag,
         SockType,
