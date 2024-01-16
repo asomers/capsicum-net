@@ -280,13 +280,14 @@ mod connect {
     use super::*;
 
     #[test]
-    fn econnrefused() {
+    fn eaddrnotavail() {
         let mut cap_net = {
             let mut casper = CASPER.get().unwrap().lock().unwrap();
             casper.net().unwrap()
         };
 
-        let want = get_local_in();
+        // 127.100.0.1 is reserved for local use, but most likely not assigned
+        let want = SockaddrIn::new(127, 100, 0, 1, crate::next_port());
 
         let client_sock = socket(
             AddressFamily::Inet,
@@ -296,7 +297,7 @@ mod connect {
         )
         .unwrap();
         let e = cap_net.connect(&client_sock, &want).unwrap_err();
-        assert_eq!(Error::ECONNREFUSED, e);
+        assert_eq!(Error::EADDRNOTAVAIL, e);
     }
 
     #[test]

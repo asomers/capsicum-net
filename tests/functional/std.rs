@@ -95,15 +95,20 @@ mod tcp_stream {
         use super::*;
 
         #[test]
-        fn econnrefused() {
+        fn eaddrnotavail() {
             let mut cap_net = {
                 let mut casper = CASPER.get().unwrap().lock().unwrap();
                 casper.net().unwrap()
             };
 
-            let want = get_local_in();
+            // 127.100.0.1 is reserved for local use, but most likely not assigned
+            let want: SocketAddr = SocketAddrV4::new(
+                Ipv4Addr::new(127, 100, 0, 1),
+                crate::next_port(),
+            )
+            .into();
             let err = TcpStream::cap_connect(&mut cap_net, want).unwrap_err();
-            assert_eq!(err.raw_os_error(), Some(libc::ECONNREFUSED));
+            assert_eq!(err.raw_os_error(), Some(libc::EADDRNOTAVAIL));
         }
 
         #[test]
