@@ -6,6 +6,7 @@ use std::{
 };
 
 use capsicum_net::CasperExt;
+use nix::sys::socket::{getsockopt, sockopt::ListenQLimit};
 use tempfile::TempDir;
 
 use crate::CASPER;
@@ -67,6 +68,7 @@ mod tcp_listener {
             let socket = TcpListener::cap_bind(&mut cap_net, want).unwrap();
             let bound = socket.local_addr().unwrap();
             assert_eq!(want, bound);
+            assert!(getsockopt(&socket, ListenQLimit).unwrap() > 0);
         }
 
         #[test]
@@ -80,6 +82,7 @@ mod tcp_listener {
             let socket = TcpListener::cap_bind(&mut cap_net, want).unwrap();
             let bound = socket.local_addr().unwrap();
             assert_eq!(want, bound);
+            assert!(getsockopt(&socket, ListenQLimit).unwrap() > 0);
         }
     }
 }
@@ -297,6 +300,7 @@ mod unix_listener {
             let bound: nix::sys::socket::UnixAddr =
                 nix::sys::socket::getsockname(socket.as_raw_fd()).unwrap();
             assert_eq!(path, bound.path().unwrap());
+            assert!(getsockopt(&socket, ListenQLimit).unwrap() > 0);
         }
     }
 }
