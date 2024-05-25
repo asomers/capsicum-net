@@ -12,11 +12,11 @@
 //! the agent, this library has three interfaces:
 //!
 //! * Low-level methods directly on the `CapNetAgent` object.  These work well
-//! with the [nix](https://docs.rs/nix/0.27.1/nix/) crate.
+//!   with the [nix](https://docs.rs/nix/0.27.1/nix/) crate.
 //! * Extension traits that work on the standard socket types, like
-//! [`UdpSocketExt`](crate::std::UdpSocketExt).
+//!   [`UdpSocketExt`](crate::std::UdpSocketExt).
 //! * Extension traits that work with tokio types, like
-//! [`TcpSocketExt`](tokio::TcpSocketExt).
+//!   [`TcpSocketExt`](tokio::TcpSocketExt).
 //!
 //! # Example
 //! In this example, we create a new UdpSocket and bind it to a port.  Such a
