@@ -24,13 +24,13 @@ task:
       env:
         VERSION: 1.69.0
       freebsd_instance:
-        image: freebsd-13-2-release-amd64
+        image: freebsd-13-3-release-amd64
     - name: FreeBSD 13 i686 nightly
       # Test i686 FreeBSD in 32-bit emulation on a 64-bit host.
       env:
         TARGET: i686-unknown-freebsd
       freebsd_instance:
-        image: freebsd-13-2-release-amd64
+        image: freebsd-13-3-release-amd64
   << : *SETUP
   extra_setup_script:
     - . $HOME/.cargo/env
@@ -54,13 +54,13 @@ lint_task:
     HOME: /tmp  # cargo cache needs it
     VERSION: nightly
   freebsd_instance:
-    image: freebsd-13-2-release-amd64
+    image: freebsd-13-3-release-amd64
   << : *SETUP
   extra_setup_script:
     - . $HOME/.cargo/env
     - rustup component add --toolchain $VERSION clippy
     - rustup component add --toolchain $VERSION rustfmt
-    - pkg install -y cargo-audit
+    - pkg install -y ca_root_nss cargo-audit
   cargo_cache:
     folder: $HOME/.cargo/registry
   clippy_script:
