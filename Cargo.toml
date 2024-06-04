@@ -4,8 +4,12 @@ description = "Rust bindings to FreeBSD's cap_net library"
 version = "0.1.0"
 edition = "2021"
 authors = ["Alan Somers <asomers@gmail.com>"]
-license = "MIT/Apache-2.0"
+license = "MIT OR Apache-2.0"
 keywords = ["capsicum", "freebsd", "network"]
+repository = "https://github.com/asomers/capsicum-net"
+documentation = "https://docs.rs/capsicum-net"
+categories = ["os::freebsd-apis"]
+keywords = ["sandbox", "FreeBSD", "capsicum"]
 rust-version = "1.77.0"
 exclude = [
     ".gitignore",
