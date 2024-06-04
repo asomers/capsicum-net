@@ -1,7 +1,6 @@
 setup: &SETUP
   env:
     HOME: /tmp # cargo needs it
-    VERSION: nightly
   setup_script:
     - pkg install -y llvm
     - fetch https://sh.rustup.rs -o rustup.sh
@@ -22,7 +21,7 @@ task:
         image: freebsd-14-0-release-amd64-ufs
     - name: FreeBSD 13 amd64 stable
       env:
-        VERSION: 1.69.0
+        VERSION: 1.77.0
       freebsd_instance:
         image: freebsd-13-3-release-amd64
     - name: FreeBSD 13 i686 nightly
