@@ -53,7 +53,6 @@ use ::std::{
 };
 use bitflags::bitflags;
 use capsicum::casper;
-use cstr::cstr;
 use nix::{
     errno::Errno,
     sys::socket::{
@@ -78,7 +77,7 @@ casper::service_connection! {
     /// [cap_net(3)](https://man.freebsd.org/cgi/man.cgi?query=cap_net) service.
     #[derive(Debug)]
     pub CapNetAgent,
-    cstr!("system.net"),
+    c"system.net",
     net
 }
 
