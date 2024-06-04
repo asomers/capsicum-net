@@ -22,11 +22,11 @@ default = []
 
 [dependencies]
 bitflags = { version = "2.4" }
-capsicum = { version = "0.3.0", features = ["casper"] }
+capsicum = { version = "0.4.0", features = ["casper"] }
 casper-sys = { version = "0.1.1" }
 cstr = "0.2.0"
 libc = "0.2.153"
-nix = { version = "0.28.0", features = [ "net", "socket" ] }
+nix = { version = ">=0.28.0,<0.30.0", features = [ "net", "socket" ] }
 tokio = { version = "1.27.0", default-features = false, features = ["net"], optional = true}
 
 [dev-dependencies]
@@ -37,7 +37,3 @@ tokio = { version = "1.27.0", features = ["macros", "rt"] }
 [[test]] 
 name = "functional"
 path = "tests/functional/mod.rs"
-
-[patch.crates-io]
-capsicum = { git = "https://github.com/asomers/capsicum-rs", rev = "f5fd1e6"}
-casper-sys = { git = "https://github.com/asomers/capsicum-rs", rev = "f5fd1e6"}
