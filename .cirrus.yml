@@ -72,6 +72,10 @@ lint_task:
   audit_script:
     - . $HOME/.cargo/env
     - cargo audit
+  minver_script:
+    - . $HOME/.cargo/env
+    - cargo +$VERSION update -Zdirect-minimal-versions
+    - cargo +$VERSION check --all-targets --all-features
   before_cache_script: rm -rf $CARGO_HOME/registry/index
 
 # Ensure that the docs can be cross-compiled, as docs.rs does.
