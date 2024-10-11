@@ -358,7 +358,7 @@ bitflags! {
     }
 }
 
-impl<'a> Limit<'a> {
+impl Limit<'_> {
     /// Limit the `cap_net` service to only allow binding to the given address.
     ///
     /// May be called multiple times to allow binding to multiple addresses.
