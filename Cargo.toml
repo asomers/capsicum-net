@@ -9,7 +9,7 @@ repository = "https://github.com/asomers/capsicum-net"
 documentation = "https://docs.rs/capsicum-net"
 categories = ["os::freebsd-apis"]
 keywords = ["sandbox", "FreeBSD", "capsicum"]
-rust-version = "1.77.0"
+rust-version = "1.81.0"
 exclude = [
     ".gitignore",
     "coverage.sh"
