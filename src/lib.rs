@@ -328,7 +328,7 @@ impl CapNetAgent {
     /// // Now the service will refuse attempts to bind to any other address or
     /// // port.
     /// ```
-    pub fn limit(&mut self, flags: LimitFlags) -> Limit {
+    pub fn limit(&mut self, flags: LimitFlags) -> Limit<'_> {
         let limit = unsafe {
             ffi::cap_net_limit_init(self.0.as_mut_ptr(), flags.bits())
         };
