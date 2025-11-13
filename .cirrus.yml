@@ -22,11 +22,6 @@ task:
     - name: FreeBSD 15 amd64 nightly
       freebsd_instance:
         image: freebsd-15-0-alpha4-amd64-ufs
-    - name: FreeBSD 14 amd64 stable
-      env:
-        VERSION: 1.81.0
-      freebsd_instance:
-        image: freebsd-14-3-release-amd64-ufs
     - name: FreeBSD 14 i686 nightly
       # Test i686 FreeBSD in 32-bit emulation on a 64-bit host.
       env:
@@ -48,6 +43,29 @@ task:
     - . $HOME/.cargo/env
     - cargo +$VERSION doc --target $TARGET --no-deps --all-features
   before_cache_script: rm -rf $HOME/.cargo/registry/index 
+
+task:
+  name: FreeBSD 14 MSRV
+  freebsd_instance:
+    image: freebsd-14-3-release-amd64-ufs
+  env:
+    HOME: /tmp  # cargo cache needs it
+    TARGET: x86_64-unknown-freebsd
+    VERSION: 1.81.0
+  << : *SETUP
+  cargo_cache:
+    folder: $HOME/.cargo/registry
+    fingerprint_script: cat Cargo.lock || echo ""
+  # For the MSRV, just check that it builds.  Don't run the tests, which may
+  # require newer toolchains.
+  check_script:
+    - . $HOME/.cargo/env
+    - cargo +$VERSION update
+    # Downgrade home, because the latest version requires newer toolchain
+    - cargo +$VERSION update -p home --precise 0.5.11
+    - cargo +$VERSION check --target $TARGET --no-default-features
+    - cargo +$VERSION check --target $TARGET --all-features
+  before_cache_script: rm -rf $HOME/.cargo/registry/index
 
 # Stuff that doesn't need to be repeated for each target, env, and toolchain
 lint_task:
