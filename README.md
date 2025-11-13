@@ -45,4 +45,4 @@ See LICENSE-APACHE, and LICENSE-MIT for details.
 
 # Sponsorship
 
-`capsicum-net` is sponsored by Axcient, inc.
+`capsicum-net` is sponsored by ConnectWise.
