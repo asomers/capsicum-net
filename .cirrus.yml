@@ -18,7 +18,7 @@ task:
         image: freebsd-13-5-release-amd64
     - name: FreeBSD 14 amd64 nightly
       freebsd_instance:
-        image: freebsd-14-3-release-amd64-ufs
+        image: freebsd-14-4-release-amd64-ufs
     - name: FreeBSD 15 amd64 nightly
       freebsd_instance:
         image: freebsd-15-0-release-amd64-ufs
@@ -27,7 +27,7 @@ task:
       env:
         TARGET: i686-unknown-freebsd
       freebsd_instance:
-        image: freebsd-14-3-release-amd64-ufs
+        image: freebsd-14-4-release-amd64-ufs
   << : *SETUP
   extra_setup_script:
     - . $HOME/.cargo/env
@@ -47,7 +47,7 @@ task:
 task:
   name: FreeBSD 14 MSRV
   freebsd_instance:
-    image: freebsd-14-3-release-amd64-ufs
+    image: freebsd-14-4-release-amd64-ufs
   env:
     HOME: /tmp  # cargo cache needs it
     TARGET: x86_64-unknown-freebsd
@@ -74,7 +74,7 @@ lint_task:
     HOME: /tmp  # cargo cache needs it
     VERSION: nightly
   freebsd_instance:
-    image: freebsd-14-3-release-amd64-ufs
+    image: freebsd-14-4-release-amd64-ufs
   << : *SETUP
   extra_setup_script:
     - . $HOME/.cargo/env
