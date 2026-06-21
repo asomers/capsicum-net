@@ -37,7 +37,7 @@ jobs:
       - name: Start VM
         uses: vmactions/freebsd-vm@v1
         with:
-          release: ${{ matrix.freebsd_version }}
+          release: 15.1
           usesh: true
       - name: Install dependencies
         shell: freebsd {0}
@@ -65,7 +65,7 @@ jobs:
       - name: Start VM
         uses: vmactions/freebsd-vm@v1
         with:
-          release: "14.4"
+          release: 15.1
           usesh: true
       - name: Install dependencies
         shell: freebsd {0}
@@ -94,7 +94,7 @@ jobs:
       - name: Start VM
         uses: vmactions/freebsd-vm@v1
         with:
-          release: "14.4"
+          release: 15.1
           usesh: true
       - name: Install dependencies
         shell: freebsd {0}
